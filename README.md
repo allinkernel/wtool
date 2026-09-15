@@ -107,7 +107,7 @@ terminal/tmux                  50    ·      ●        ●
 | `terminal/tmux` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-tmux-config/releases/tag/snapshot-2026-09-15) | [terminal-tmux-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz) | 4.5K |
 | `themes/typora/lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
 | `tools/repo` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-repo/releases/tag/snapshot-2026-09-15) | [tools-repo-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz) | 5.4K |
-| `wtool-base` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool/releases/tag/snapshot-2026-09-15) | [wtool-base-2026-09-15.tar.gz](https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz) | 22.8K |
+| `wtool-base` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool/releases/tag/snapshot-2026-09-15) | [wtool-base-2026-09-15.tar.gz](https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz) | 23.0K |
 
 ### bash（Linux / macOS / WSL）
 
@@ -148,7 +148,9 @@ tar -xf tools-repo-2026-09-15.tar.gz
 tar -xf wtool-base-2026-09-15.tar.gz
 ```
 
-跑完 `~/self/wtool/` 就是一个完整的工作区，接着看下一节。
+跑完 `~/self/wtool/` 就是一个完整的工作区。
+接着 `cd ~/self/wtool && ./bootstrap/install.sh`（第一次要用完整路径，
+它会把根目录的 `./install.sh` 等入口补齐，之后就能直接用短的了）。
 
 ### PowerShell（Windows 10 及以上自带 tar）
 
@@ -181,14 +183,25 @@ tar -xf wtool-base-2026-09-15.tar.gz
 跑完 `$HOME\self\wtool` 就是一个完整的工作区。
 <!-- <<< wtool:downloads <<< -->
 
-下载解压完成之后，你会得到一个 `~/self/wtool` 目录：
+下载解压完成之后，你会得到一个 `~/self/wtool` 目录。进去，跑 `bootstrap/` 下面那个：
 
 ```bash
 cd ~/self/wtool
-./install.sh
+./bootstrap/install.sh
 ```
 
-`./install.sh` 会把引擎挂好，然后按顺序处理每个项目。中途它会问你确认（尤其是要改系统文件的时候），照着提示走即可。
+这一次要用完整路径——解压出来的工作区还没有根目录那几个入口（`./install.sh`、`./README.md` 之类）。那些是 `repo` 工具在 `repo sync` 时按清单建的，而你是手动解压的。第一次跑 `bootstrap/install.sh` 会顺手把它们补齐：
+
+```
+wtool-bootstrap: 工作区入口（/home/you/self/wtool）
+wtool-bootstrap:   install.sh -> bootstrap/install.sh
+wtool-bootstrap:   README.md -> wtool-base/README.md
+...
+```
+
+之后 `./install.sh` 就能直接用了，和 `repo sync` 出来的工作区完全一样。
+
+它会先把引擎挂到 `~/.wtool/bootstrap`，然后按顺序处理每个项目（装系统包、编译、建软链、写 shell 配置）。中途要改系统文件时会问你确认，照着提示走即可。
 
 ---
 
