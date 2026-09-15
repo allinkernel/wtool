@@ -92,8 +92,87 @@ terminal/tmux                  50    ·      ●        ●
 <!-- >>> wtool:downloads >>> -->
 <!-- 这一块由 `wtool publish` 自动重写，不要手改。 -->
 
-> 还没有发布过任何项目。在任意一台能访问 GitHub 的机器上跑
-> `wtool publish` 之后，这里会自动填上。
+每个项目的最新发布包都在它自己的 release 页面上。
+全部下载并解开之后，你会得到一个完整的工作区目录。
+
+| 项目 | 版本 | 包 | 大小 |
+|---|---|---|---|
+| `bootstrap` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-bootstrap/releases/tag/snapshot-2026-09-15) | [bootstrap-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz) | 83.5K |
+| `editor/astronvim_v5/astronvim_v5_config` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-astronvim_v5_config/releases/tag/snapshot-2026-09-15) | [editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-astronvim_v5_config/releases/download/snapshot-2026-09-15/editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz) | 12.0K |
+| `harness` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-harness/releases/tag/snapshot-2026-09-15) | [harness-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz) | 30.4K |
+| `os/ubuntu` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/snapshot-2026-09-15) | [os-ubuntu-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz) | 4.0K |
+| `shell/oh-my-zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/snapshot-2026-09-15) | [shell-oh-my-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz) | 3.0M |
+| `shell/zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-zsh/releases/tag/snapshot-2026-09-15) | [shell-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz) | 2.2K |
+| `terminal/fzf` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/snapshot-2026-09-15) | [terminal-fzf-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz) | 1.7M |
+| `terminal/tmux` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-tmux-config/releases/tag/snapshot-2026-09-15) | [terminal-tmux-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz) | 4.5K |
+| `themes/typora/lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
+| `tools/repo` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-repo/releases/tag/snapshot-2026-09-15) | [tools-repo-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz) | 5.4K |
+
+### bash（Linux / macOS / WSL）
+
+```bash
+mkdir -p ~/self && cd ~/self
+curl -fL -o bootstrap-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz
+curl -fL -o editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-astronvim_v5_config/releases/download/snapshot-2026-09-15/editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz
+curl -fL -o harness-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz
+curl -fL -o os-ubuntu-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz
+curl -fL -o shell-oh-my-zsh-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz
+curl -fL -o shell-zsh-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz
+curl -fL -o terminal-fzf-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz
+curl -fL -o terminal-tmux-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz
+curl -fL -o themes-typora-lightmind-2026-09-15.tar.gz \
+  https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz
+curl -fL -o tools-repo-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz
+tar -xf bootstrap-2026-09-15.tar.gz
+tar -xf editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz
+tar -xf harness-2026-09-15.tar.gz
+tar -xf os-ubuntu-2026-09-15.tar.gz
+tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
+tar -xf shell-zsh-2026-09-15.tar.gz
+tar -xf terminal-fzf-2026-09-15.tar.gz
+tar -xf terminal-tmux-2026-09-15.tar.gz
+tar -xf themes-typora-lightmind-2026-09-15.tar.gz
+tar -xf tools-repo-2026-09-15.tar.gz
+```
+
+跑完 `~/self/wtool/` 就是一个完整的工作区，接着看下一节。
+
+### PowerShell（Windows 10 及以上自带 tar）
+
+```powershell
+$d = "$HOME\self"; New-Item -ItemType Directory -Force -Path $d | Out-Null; Set-Location $d
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz" -OutFile "bootstrap-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-astronvim_v5_config/releases/download/snapshot-2026-09-15/editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz" -OutFile "editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz" -OutFile "harness-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz" -OutFile "os-ubuntu-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz" -OutFile "shell-oh-my-zsh-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz" -OutFile "shell-zsh-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz" -OutFile "terminal-fzf-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz" -OutFile "terminal-tmux-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz" -OutFile "themes-typora-lightmind-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz" -OutFile "tools-repo-2026-09-15.tar.gz"
+tar -xf bootstrap-2026-09-15.tar.gz
+tar -xf editor-astronvim_v5-astronvim_v5_config-2026-09-15.tar.gz
+tar -xf harness-2026-09-15.tar.gz
+tar -xf os-ubuntu-2026-09-15.tar.gz
+tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
+tar -xf shell-zsh-2026-09-15.tar.gz
+tar -xf terminal-fzf-2026-09-15.tar.gz
+tar -xf terminal-tmux-2026-09-15.tar.gz
+tar -xf themes-typora-lightmind-2026-09-15.tar.gz
+tar -xf tools-repo-2026-09-15.tar.gz
+```
+
+跑完 `$HOME\self\wtool` 就是一个完整的工作区。
 <!-- <<< wtool:downloads <<< -->
 
 下载解压完成之后，你会得到一个 `~/self/wtool` 目录：
