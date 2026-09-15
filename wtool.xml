@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  wtool-base —— 用户文档。只有文档，没有工具。
+
+  **只可发布，不可安装。**
+
+  这里刻意没有 <link> / <env>：这个仓库没有需要铺到 $HOME 的东西，
+  也没有需要编译的产物。它参与 wtool 的唯一方式是"能被发布"，
+  这样别人从发布页把所有包下下来，就能拼出一个完整的工作区。
+
+  表格里它会显示成 install 不支持、publish 可执行 —— 那是准确的。
+-->
+<wtool schema="1" id="wtool-base" priority="100">
+  <!-- 打源码包推到本仓 release。包内第一层是 wtool/，解压后与 repo sync 一致 -->
+  <publish kind="source"/>
+</wtool>
