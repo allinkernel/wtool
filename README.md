@@ -215,7 +215,7 @@ tar -xf wtool-base-2026-09-15.tar.gz
 ```
 
 跑完 `~/self/wtool/` 就是一个完整的工作区。
-接着 `cd ~/self/wtool && ./bootstrap/install.sh`（第一次要用完整路径，
+接着 `cd ~/self/wtool && ./bootstrap/scripts/install.sh`（第一次要用完整路径，
 它会把根目录的 `./install.sh` 等入口补齐，之后就能直接用短的了）。
 
 ### PowerShell（Windows 10 及以上自带 tar）
@@ -247,14 +247,14 @@ tar -xf wtool-base-2026-09-15.tar.gz
 跑完 `$HOME\self\wtool` 就是一个完整的工作区。
 <!-- <<< wtool:downloads <<< -->
 
-下载解压完成之后，你会得到一个 `~/self/wtool` 目录。进去，跑 `bootstrap/` 下面那个：
+下载解压完成之后，你会得到一个 `~/self/wtool` 目录。进去，跑 `bootstrap/scripts/` 下面那个：
 
 ```bash
 cd ~/self/wtool
-./bootstrap/install.sh
+./bootstrap/scripts/install.sh
 ```
 
-这一次要用完整路径——解压出来的工作区还没有根目录那几个入口（`./install.sh`、`./README.md` 之类）。那些是 `repo` 工具在 `repo sync` 时按清单建的，而你是手动解压的。第一次跑 `bootstrap/install.sh` 会顺手把它们补齐：
+**这一次要用完整路径**——解压出来的工作区还没有根目录那几个入口（`./install.sh`、`./README.md` 之类）。那些是 `repo` 工具在 `repo sync` 时按清单建的，而你是手动解压的。第一次跑它会顺手把它们补齐：
 
 ```
 wtool-install: 第 2 步：工作区入口（/home/you/self/wtool）
