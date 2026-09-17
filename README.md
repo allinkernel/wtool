@@ -283,4 +283,100 @@ wtool version
 
 ---
 
+## 4. 仓库里这些脚本分别干什么
+
+项目里有一堆同名的 `.sh`，容易搞混。按"谁调用谁"分三层看就清楚了。
+
+### 4.1 工作区根目录看到的
+
+根目录那几个是**软链接**，指向真正的文件（`repo sync` 建出来的）：
+
+| 根目录 | 实际是 | 干什么 |
+|---|---|---|
+| `install.sh` | `bootstrap/scripts/install.sh` | 装 **wtool 自己**（自举引擎、建工作区入口）。**不装任何项目** |
+| `uninstall.sh` | `bootstrap/scripts/uninstall.sh` | 把 wtool 自己卸掉 |
+| `README.md` | `wtool-base/README.md` | 就是本文 |
+| `guide.md` | `wtool-base/guide.md` | 完整手册 |
+
+记住一句分工：**根目录的 `install.sh` 只负责让 `wtool` 这条命令出现**，
+项目是靠 `wtool install` 装的。这是两件事。
+
+### 4.2 引擎
+
+| 文件 | 干什么 |
+|---|---|
+| `bootstrap/wtool.sh` | 引擎本体，`wtool` 命令就是它的软链。所有 `wtool xxx` 都进这里 |
+| `bootstrap/lib/*.py` | 只**算**不写：扫项目、算计划、画表、算环境变量 |
+| `bootstrap/lib/*.sh` | 只**写**不算：落盘、记账、建链接、生成 rc |
+
+刻意分成两半（Python 推理、Shell 动手），这样"会发生什么"可以在动手之前
+完整算出来——`--dry-run` 才有意义。
+
+### 4.3 给容器用的两个脚本
+
+工作区挂进容器时，这两个差别很大：
+
+| 脚本 | 做什么 | 什么时候用 |
+|---|---|---|
+| `bootstrap/scripts/container-shell.sh` | 装系统依赖 → 装引擎 → 跑一遍 `wtool bootstrap` → 把你丢进 zsh | 想马上得到一个能用的环境 |
+| `bootstrap/scripts/container-raw.sh` | **什么都不装**，只挂工作区 → 进 bash | 想从零走一遍，每一步自己决定 |
+
+`container-raw.sh` 的状态等价于"刚 `repo sync` 完"：连 `python3` 和 `git`
+都没有。这是**故意的**——装了它们 `wtool` 就能跑，可真机器刚同步完时本来
+就没有，如实反映那个状态才不会被误导。进去之后它会打一份操作对照表。
+
+```bash
+# 从头走一遍
+docker run --rm -it --network=host \
+  -v ~/self/wtool:/wtool:ro \
+  ubuntu:20.04 bash /wtool/bootstrap/scripts/container-raw.sh
+
+# 或者直接要一个装好的环境
+docker run --rm -it --network=host \
+  -v ~/self/wtool:/wtool:ro \
+  ubuntu:20.04 bash /wtool/bootstrap/scripts/container-shell.sh
+```
+
+（`--network=host` 是必须的：容器里的 `127.0.0.1` 是它自己，
+需要代理时不这样传就用不了。）
+
+### 4.4 每个项目自己的 `scripts/`
+
+项目目录下的 `scripts/` 是**这个项目专属**的动作。有没有某个文件本身
+就是一种声明——有 `build.sh` 才叫"能构建"：
+
+| 文件 | 什么时候跑 | 干什么 |
+|---|---|---|
+| `build.sh` | `wtool build <项目>` | 自己编、自己拉，产物放到最终位置 |
+| `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，放到**同样的位置** |
+| `install.sh` | `wtool install <项目>` | 登记、建软链、写 shell 集成 |
+| `install.sh --uninstall` | `wtool uninstall --id <项目>` | 撤销上面做的 |
+| `publish.sh` | `wtool publish <项目>` | 构建并打包传到项目自己的 Release |
+| `extract.sh` | 手动（只有浏览器时） | 校验并解开发布包，铺到 `$HOME`，**不装** |
+
+**`build` 和 `download` 是二选一的两条路，结果等价。** 编一次几十分钟到
+几小时，下载几分钟——能下载就下载。两条路把产物放到同一个地方，
+所以之后的 `wtool install` 完全不关心它是编出来的还是下下来的。
+
+发布过包的项目，Release 页面里会带 `extract.sh`。那是给**只能用浏览器下载**
+的机器用的：把 `extract.sh`、`dist.json` 和所有分卷下到同一个目录，
+`sh extract.sh` 铺好，再 `wtool install <项目>` 收尾。
+它不检查系统版本——在最老的系统里编出来的包，新的系统都能跑。
+
+### 4.5 装的东西放在哪
+
+`wtool` 装的东西**都在 `~/.wtool/` 下面**，`$HOME` 里只留软链接。
+所以卸载是干净的：删掉 `~/.wtool/` 就等于全撤了。
+
+配置文件和 shell 集成也走这条路——这也是为什么你可以在
+`~/.zshrc` 里只看到一小段 loader，而不是每个项目各插一段。
+
+### 4.6 不要手改的地方
+
+- 项目的 `wtool.xml` 可以改（那是给你声明用的），改完跑 `wtool validate <项目>` 看一眼
+- `~/.wtool/` 下的东西不要手改，那是生成物；要改就改声明再重跑
+- 各项目 `scripts/` 下的脚本可以读、可以照着改，但别在没跑过的机器上盲改
+
+---
+
 以上只是速查。**完整的说明——项目结构、每个命令的细节、所有子项目的索引——在 [guide.md](guide.md)。**
