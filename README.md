@@ -34,8 +34,8 @@ wtool bootstrap
 
 第 2 步跑完它会把后面该做什么直接打在屏幕上，不用回来翻文档。
 
-**不想在真机上试？** 用容器跑一遍（`--network=host` 是必须的，
-容器里的 `127.0.0.1` 是它自己）：
+**不想在真机上试？** 用容器跑一遍（`--network=host` 不能省：容器里的
+`127.0.0.1` 只有在这个网络模式下才是宿主自己，脚本靠它自动接上宿主代理）：
 
 ```bash
 # 从头走一遍，每一步自己决定（等价于"刚 repo sync 完"）
@@ -76,31 +76,33 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 
 **项目只需要声明，不需要写安装逻辑。** 每个项目里有一个 `wtool.xml`，用几行 XML 说清楚"我有哪些文件要被 source""哪些文件要软链到哪里"。剩下的——建链接、写 shell 块、保证顺序、记录状态、支持卸载——全部由 `wtool` 负责。
 
-只有通用机制表达不了的事情，项目才需要额外提供一个脚本：
+只有通用机制表达不了的事情，项目才需要额外提供一个脚本，都放在项目自己的 `scripts/` 下：
 
 | 脚本 | 什么时候需要 | 对应的命令 |
 |---|---|---|
-| `build.sh` | 这个项目需要编译或下载（比如从源码编译一个编辑器） | `wtool build <项目>` |
-| `install.sh` | 装它需要通用机制做不到的步骤 | `wtool install <项目>` |
+| `build.sh` | 这个项目要自己编译（比如从源码编一个编辑器） | `wtool build <项目>` |
+| `download.sh` | 这个项目可以从发布页下别人编好的包，省掉编译 | `wtool download <项目>` |
+| `install.sh` | 装它需要通用机制做不到的步骤 | `wtool install <项目目录>` |
 | `publish.sh` | 发布时不能只打一个源码包（比如产物在容器里） | `wtool publish <项目>` |
 
-**这三个脚本在不在，就代表这个项目有没有这三项能力。** `wtool` 不带参数跑一下，会看到一张表，哪一项亮着绿灯就说明这个项目能做什么：
+**这些脚本在不在，就代表这个项目有没有这几项能力**（`install` 还有一条来源：`wtool.xml` 里声明了 `link` 或 `env` 也算有）。`wtool` 不带参数跑一下，会看到一张表，哪一格写着「可执行」或「已完成」，就说明这个项目能做这件事：
 
 ```
 ┌──────────────────────┬──────┬────────────┬────────────┬────────────┬────────────┐
 │ 项目                 │ prio │ build      │ download   │ install    │ publish    │
 ├──────────────────────┼──────┼────────────┼────────────┼────────────┼────────────┤
-│ bootstrap            │ 5    │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
-│ os/ubuntu            │ 5    │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
-│ shell/oh-my-zsh      │ 10   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
-│ shell/zsh            │ 20   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
-│ tools/repo           │ 40   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
-│ terminal/tmux        │ 50   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
-│ terminal/fzf         │ 60   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ bootstrap            │ 5    │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ os/ubuntu            │ 5    │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ shell/oh-my-zsh      │ 10   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ shell/zsh            │ 20   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ tools/repo           │ 40   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ tools/android_repack │ 45   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
+│ terminal/tmux        │ 50   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ terminal/fzf         │ 60   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
 │ editor/astronvim_v5  │ 70   │ 可执行     │ 可执行     │ 待构建下载 │ 待构建下载 │
-│ harness              │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
-│ lightmind            │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
-│ wtool-base           │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
+│ harness              │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ lightmind            │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ wtool-base           │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
 └──────────────────────┴──────┴────────────┴────────────┴────────────┴────────────┘
 ```
 
@@ -112,9 +114,8 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | **可执行** | 黄 | 现在就能跑 |
 | **待构建下载** | 蓝 | 能力有，但得先 `build` 或 `download` |
 | **已完成** | 绿 | 跑过了 |
-| | 亮绿 | 这是**能力来源**：项目自带脚本（`scripts/build.sh` 等） |
 
-最后一列 `publish` 对大多数项目是「可执行」还是「已完成」取决于你发布过没有。
+`install` 和 `publish` 显示的是**你这台机器上的进度**，所以它会变：装过一个项目就从黄变绿，换台机器或者卸掉它又变回黄。
 
 **这四列是一条流水线，后面的依赖前面的：**
 
@@ -143,6 +144,7 @@ build 或 download  →  install  →  publish
 | [wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置，外加一组显示 CPU/内存/磁盘/网络的小脚本 |
 | [wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 的预编译二进制，省得每台机器重编 |
 | [wtool-repo](https://github.com/allinkernel/wtool-repo) | `repo` 工具（管理多仓库的那个）和它的快捷命令 |
+| [wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像"解包 → 改 → 重新打包"的流水线 |
 | [wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | 一整套 Neovim 环境：编译 nvim、装插件、装语言服务器、打成发布包 |
 | [wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 上面那套环境的具体配置（快捷键、主题、插件选择） |
 | [typora-LightMindTheme](https://github.com/allinkernel/typora-LightMindTheme) | Typora 的一个自制主题 |
@@ -255,21 +257,23 @@ cd ~/self/wtool
 这一次要用完整路径——解压出来的工作区还没有根目录那几个入口（`./install.sh`、`./README.md` 之类）。那些是 `repo` 工具在 `repo sync` 时按清单建的，而你是手动解压的。第一次跑 `bootstrap/install.sh` 会顺手把它们补齐：
 
 ```
-wtool-bootstrap: 工作区入口（/home/you/self/wtool）
-wtool-bootstrap:   install.sh -> bootstrap/install.sh
-wtool-bootstrap:   README.md -> wtool-base/README.md
+wtool-install: 第 2 步：工作区入口（/home/you/self/wtool）
+wtool-install:   install.sh -> bootstrap/scripts/install.sh
+wtool-install:   README.md -> wtool-base/README.md
 ...
 ```
 
 之后 `./install.sh` 就能直接用了，和 `repo sync` 出来的工作区完全一样。
 
-它会先把引擎挂到 `~/.wtool/bootstrap`，然后按顺序处理每个项目（装系统包、编译、建软链、写 shell 配置）。中途要改系统文件时会问你确认，照着提示走即可。
+这个脚本只走四步：准备运行环境（缺 `python3`/`git` 就装上）、自举引擎到 `~/.wtool/bootstrap`、补齐上面那些工作区入口、让 `wtool` 进 `PATH`。**做完就停，它不装任何项目**——屏幕最后会直接把接下来该敲的命令打给你（`exec $SHELL`，然后 `wtool bootstrap`），照着走即可。
 
 ---
 
 ## 3. 怎么用
 
 装完之后，`wtool` 命令就可以在任何目录下直接用了。
+
+不过有几条命令要你告诉它**项目在哪**：`install` / `uninstall` / `provision` / `validate` / `status` 认的是**项目目录**——在工作区根目录下写 `terminal/tmux` 就行，在别的地方要写全路径。`build` / `download` / `publish` 宽松些，直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）也可以，在哪跑都认。
 
 ### 3.1 看总览
 
@@ -286,9 +290,9 @@ wtool doctor     # 表格 + 环境诊断（版本、系统、状态目录、缺�
 ### 3.2 装
 
 ```bash
-wtool install terminal/tmux       # 装一个项目
-wtool install ./terminal/tmux     # 也可以用目录路径
-wtool uninstall terminal/tmux     # 撤销，系统回到装之前
+cd <工作区目录>                        # install / uninstall 认的是项目目录，在工作区根目录最省事
+wtool install terminal/tmux         # 装一个项目
+wtool uninstall --id terminal/tmux  # 撤销，系统回到装之前；--id 认项目名，在哪个目录跑都行
 ```
 
 `install` 是完全可逆的。想先看看它会做什么：
@@ -299,11 +303,13 @@ wtool install terminal/tmux --dry-run
 
 它会打印出计划（要建哪些链接、要写哪几段 shell 块），但不真的动系统。
 
-一次装好所有项目：
+一次把不需要你先决策的项目都装上：
 
 ```bash
 wtool bootstrap
 ```
+
+需要「编还是下」的项目它会跳过，并把该跑的命令列给你——见 3.3。
 
 【图片占位】![wtool install 的输出](.pic/install.png)
 
@@ -312,16 +318,21 @@ wtool bootstrap
      截图建议包含开始几行和结束几行，能看出"按项目逐个处理"的结构。
 -->
 
-### 3.3 构建
+### 3.3 构建和下载
 
-有些项目需要编译或下载才能用（比如那套 Neovim 环境要从源码编编辑器）：
+有些项目要产出东西才能用——要么自己编，要么直接下别人编好的（比如那套 Neovim 环境）：
 
 ```bash
 wtool build                      # 列出哪些项目可以构建
-wtool build editor/astronvim_v5  # 构建其中一个
+wtool build editor/astronvim_v5  # 自己编（小时级）
+
+wtool download                   # 列出哪些项目能下现成的包
+wtool download editor/astronvim_v5   # 从发布页拿（分钟级）
 ```
 
-构建这一步是可以反复跑的，中断了重来也不会坏。它慢，但只在需要的时候才需要跑——纯配置类的项目都没有这一步。
+**这两条路二选一，结果完全等价。** 编出来的和下下来的落在同一个位置，所以之后的 `wtool install` 根本不关心它是从哪来的。能下就下。
+
+这一步可以反复跑，中断了重来也不会坏——最坏只是白花一次时间。纯配置类的项目没有这一步。
 
 ### 3.4 发布
 
@@ -352,7 +363,7 @@ wtool version
 ```
 
 `build` / `download` / `install` / `uninstall` / `publish` / `bootstrap` 见上面几节。
-所有命令都支持 `--dry-run`：先打印计划、不真的动手。
+会动手的那些命令（`build` / `download` / `install` / `uninstall` / `provision` / `publish` / `bootstrap`）都支持 `--dry-run`：先打印计划、不真的动系统。`table` / `list` / `status` / `doctor` / `env` / `validate` 这些只看不动的没有这个开关。
 
 `wtool` 不带参数跑一下就是第 1 节那张能力总览表。
 
@@ -368,7 +379,7 @@ wtool version
 
 | 根目录 | 实际是 | 干什么 |
 |---|---|---|
-| `install.sh` | `bootstrap/scripts/install.sh` | 装 **wtool 自己**（自举引擎、建工作区入口）。**不装任何项目** |
+| `install.sh` | `bootstrap/scripts/install.sh` | 装 **wtool 自己**（准备运行环境、自举引擎、建工作区入口、让 `wtool` 进 `PATH`）。**不装任何项目** |
 | `uninstall.sh` | `bootstrap/scripts/uninstall.sh` | 把 wtool 自己卸掉 |
 | `README.md` | `wtool-base/README.md` | 就是本文 |
 | `guide.md` | `wtool-base/guide.md` | 完整手册 |
@@ -412,8 +423,7 @@ docker run --rm -it --network=host \
   ubuntu:20.04 bash /wtool/bootstrap/scripts/container-shell.sh
 ```
 
-（`--network=host` 是必须的：容器里的 `127.0.0.1` 是它自己，
-需要代理时不这样传就用不了。）
+两个脚本进来时都会**自动探测宿主机的代理**（默认探 `127.0.0.1:7897`）并接上。这一步不能省：`docker run` 不会把你 shell 里的代理变量带进容器，不接的话容器里是"裸网"，所有下载都失败，而人很容易把它误判成"网络坏了"。这也是 `--network=host` 不能省的原因——只有在 host 网络下，容器里的 `127.0.0.1` 才是宿主自己。不想要自动探测就加 `-e WTOOL_NO_PROXY=1`，代理不在默认端口就加 `-e WTOOL_HOST_PROXY=http://127.0.0.1:端口`。
 
 ### 4.4 每个项目自己的 `scripts/`
 
@@ -422,9 +432,9 @@ docker run --rm -it --network=host \
 
 | 文件 | 什么时候跑 | 干什么 |
 |---|---|---|
-| `build.sh` | `wtool build <项目>` | 自己编、自己拉，产物放到最终位置 |
+| `build.sh` | `wtool build <项目>` | 自己编，产物放到最终位置 |
 | `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，放到**同样的位置** |
-| `install.sh` | `wtool install <项目>` | 登记、建软链、写 shell 集成 |
+| `install.sh` | `wtool install <项目目录>` | 登记、建软链、写 shell 集成 |
 | `install.sh --uninstall` | `wtool uninstall --id <项目>` | 撤销上面做的 |
 | `publish.sh` | `wtool publish <项目>` | 构建并打包传到项目自己的 Release |
 | `extract.sh` | 手动（只有浏览器时） | 校验并解开发布包，铺到 `$HOME`，**不装** |
@@ -433,22 +443,21 @@ docker run --rm -it --network=host \
 几小时，下载几分钟——能下载就下载。两条路把产物放到同一个地方，
 所以之后的 `wtool install` 完全不关心它是编出来的还是下下来的。
 
-发布过包的项目，Release 页面里会带 `extract.sh`。那是给**只能用浏览器下载**
-的机器用的：把 `extract.sh`、`dist.json` 和所有分卷下到同一个目录，
-`sh extract.sh` 铺好，再 `wtool install <项目>` 收尾。
-它不检查系统版本——在最老的系统里编出来的包，新的系统都能跑。
+发布过包的项目分两种。**纯源码包**（大多数项目）解开就是仓库目录树，没有额外脚本。**带编译产物的项目**（现在只有 Neovim 那套）Release 页面里会多带 `extract.sh` 和 `dist.json` 加分卷，那是给**只能用浏览器下载**的机器用的：把它们下到同一个目录，`sh extract.sh` 把文件铺到 `$HOME`，再用 `wtool install <项目目录>` 收尾——登记、软链、shell 集成仍然归 `wtool` 管，所以照样能卸载。它不检查系统版本——在最老的系统里编出来的包，新的系统都能跑。
 
 ### 4.5 装的东西放在哪
 
-`wtool` 装的东西**都在 `~/.wtool/` 下面**，`$HOME` 里只留软链接。
-所以卸载是干净的：删掉 `~/.wtool/` 就等于全撤了。
+项目产出的**实体文件**都落在 `$WTOOL_PREFIX` 下面（默认 `~/.wtool/usr`），
+`$HOME` 里只留软链接。所以卸载是干净的：`wtool uninstall <项目目录>`
+把文件和链接一起撤掉，`$HOME` 回到原样。
 
-配置文件和 shell 集成也走这条路——这也是为什么你可以在
-`~/.zshrc` 里只看到一小段 loader，而不是每个项目各插一段。
+配置文件和 shell 集成也走这条路——每个项目贡献的 env 块汇总在
+`~/.wtool/.zshrc` 里，所以你的 `~/.zshrc` 里只会多出**一小段 loader**，
+而不是每个项目各插一段。
 
 ### 4.6 不要手改的地方
 
-- 项目的 `wtool.xml` 可以改（那是给你声明用的），改完跑 `wtool validate <项目>` 看一眼
+- 项目的 `wtool.xml` 可以改（那是给你声明用的），改完跑 `wtool validate <项目目录>` 看一眼
 - `~/.wtool/` 下的东西不要手改，那是生成物；要改就改声明再重跑
 - 各项目 `scripts/` 下的脚本可以读、可以照着改，但别在没跑过的机器上盲改
 

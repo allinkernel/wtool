@@ -33,9 +33,11 @@ terminal/tmux/
 ├── wtool.xml      声明：这个项目有哪些东西要装、装到哪
 ├── tmux.conf      实际的配置文件
 ├── env.zsh        需要在 shell 里生效的环境变量（可选）
-└── build.sh       需要编译/下载时才有（可选）
-    install.sh     通用机制装不了时才有（可选）
-    publish.sh     发布要特殊处理时才有（可选）
+└── scripts/       通用机制表达不了的动作，要哪个放哪个（可选）
+    ├── build.sh       需要自己编译时
+    ├── download.sh    能下现成的包时
+    ├── install.sh     有自定义安装步骤时
+    └── publish.sh     发布要特殊处理时
 ```
 
 `wtool.xml` 是最小的一份声明，长这样：
@@ -55,7 +57,7 @@ terminal/tmux/
 </wtool>
 ```
 
-四类元素，认得这些就够了：
+四类最常用的元素，认得这些就够了：
 
 | 元素 | 作用 | 可逆 |
 |---|---|---|
@@ -63,6 +65,8 @@ terminal/tmux/
 | `<env src shells>` | 在 shell 配置里插入一段托管块，`source` 这个文件 | 是 |
 | `<provision src>` | 装系统包 / 跑脚本（不可逆） | 否 |
 | `<publish kind>` | 怎么发布到 GitHub Release | —— |
+
+另外还有两类，用到时再看对应项目的 `wtool.xml`：`<system-file>`（写 `$HOME` 之外的系统文件，比如换 apt 源；写前备份，卸载时还原）和 `<source>`（源码编译型项目）。
 
 `priority` 决定处理顺序，数字小的先来。`bootstrap` 是 5，因为它要最早把环境变量准备好；纯配置项目一般 100 也无所谓。
 
@@ -84,7 +88,7 @@ terminal/tmux/
 项目负责：
 
 - 说清楚自己有什么（`wtool.xml`）
-- 通用机制表达不了的部分，写进 `build.sh` / `install.sh` / `publish.sh`
+- 通用机制表达不了的部分，写进 `scripts/` 下的 `build.sh` / `download.sh` / `install.sh` / `publish.sh`
 
 **一条不能破的规矩：项目里的脚本不要再回头调 `wtool`。** 因为 `wtool install` 本来就会去跑项目的 `install.sh`，如果 `install.sh` 又调 `wtool install`，就是一个死循环。脚本只管做自己的事，`wtool` 会在合适的时机调用它。
 
@@ -99,13 +103,14 @@ wtool init ./terminal/ripgrep
 如果这个项目还需要脚本，加上对应的开关：
 
 ```bash
-wtool init ./editor/foo --with-build              # 需要编译
+wtool init ./editor/foo --with-build              # 需要自己编译
+wtool init ./editor/foo --with-download           # 能从发布页下现成的包
 wtool init ./editor/foo --with-install            # 有自定义安装步骤
 wtool init ./editor/foo --with-publish            # 发布要特殊处理
-wtool init ./editor/foo --all                     # 三个都要
+wtool init ./editor/foo --all                     # 四个都要
 ```
 
-**不需要的脚本就别要。** `wtool` 的表格里那三列是靠脚本在不在点亮的，放一个空壳进去，等于在表格里撒谎——别人看到绿灯，照着做却发现什么都没发生。
+**不需要的脚本就别要。** `wtool` 的表格里那几列是靠脚本在不在点亮的，放一个空壳进去，等于在表格里撒谎——别人看到那格写着「可执行」，照着做却发现什么都没发生。
 
 生成之后，把 `wtool.xml` 填好，然后校验一下：
 
@@ -124,11 +129,13 @@ wtool validate ./terminal/ripgrep
 | 位置 | 放什么 |
 |---|---|
 | `~/self/wtool/`（或你选的工作区目录） | 项目本体，都是 Git 仓库 |
-| `~/.local/state/wtool/` | 状态：谁装过、软链登记、每个项目的操作记录 |
+| `$WTOOL_PREFIX`（默认 `~/.wtool/usr`） | 项目产出的实体文件：编译出来的程序、下载下来的二进制 |
 | `~/.wtool/links/<项目 ID>` | 指向项目目录的稳定地址，配置文件里引用它就永远不怕仓库搬家 |
-| `~/.zshrc` / `~/.bashrc` | 每个项目一段托管块，用注释标记出边界 |
+| `~/.wtool/.zshrc` 等 | wtool 生成的汇总文件：各项目的 env 块按优先级拼在这里 |
+| `~/.local/state/wtool/` | 状态：谁装过、软链登记、每个项目的操作记录 |
+| `~/.zshrc` / `~/.bashrc` | 只有**一段** loader 块（注释标出边界），负责 source 上面那个汇总文件 |
 
-除了第四项会动你的 shell 配置（而且只动标记之间的那几行），别的都在自己的地盘里。
+`$HOME` 里除了这一小段 loader 和几个软链接（比如 `~/.tmux.conf`），不放别的东西；大件都住在工作区或 `~/.wtool/` 下面，所以卸载能撤干净。
 
 ---
 
@@ -142,42 +149,59 @@ wtool validate ./terminal/ripgrep
 | `wtool doctor` | 总览表 + 环境诊断 |
 | `wtool init <目录>` | 新建项目，生成模板 |
 | `wtool build [<项目>…]` | 跑项目的 `build.sh` |
-| `wtool install <项目>` | 安装（软链接 + shell 块 + 项目的 `install.sh`） |
-| `wtool uninstall <项目>` | 卸载，完全还原 |
-| `wtool provision <项目>` | 装系统包 / 编译源码 / 改系统文件（不可逆） |
+| `wtool download [<项目>…]` | 跑项目的 `download.sh`，从发布页取现成的包 |
+| `wtool install <项目目录>` | 安装（软链接 + shell 块 + 项目的 `install.sh`） |
+| `wtool uninstall <项目目录>` / `--id <项目>` | 卸载，完全还原 |
+| `wtool provision <项目目录>` | 装系统包 / 编译源码 / 改系统文件（不可逆） |
 | `wtool publish [<项目>…]` | 打包发到 GitHub Release |
-| `wtool bootstrap` | 一次装好所有项目 |
+| `wtool bootstrap` | 把所有项目过一遍（provision → install），需要先编/先下的会跳过 |
 | `wtool table` | 项目总览表（`--verbose` 看细节，`--summary` 看汇总） |
 | `wtool list` | 已登记的软链接列表 |
 | `wtool status` | 检查登记的软链接是否都还在 |
-| `wtool validate <项目>` | 校验 `wtool.xml` |
+| `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool env` | 输出环境变量（`--quiet` / `--json`） |
 | `wtool version` | 版本 |
 
 ### `wtool` / `wtool table`
 
 ```
-项目                           prio  build  install  publish
-----------------------------------------------------------------
-bootstrap                      5     ·      ●        ●
-editor/astronvim_v5            70    ●      ●        ●
+┌──────────────────────┬──────┬────────────┬────────────┬────────────┬────────────┐
+│ 项目                 │ prio │ build      │ download   │ install    │ publish    │
+├──────────────────────┼──────┼────────────┼────────────┼────────────┼────────────┤
+│ bootstrap            │ 5    │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ os/ubuntu            │ 5    │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ shell/oh-my-zsh      │ 10   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ shell/zsh            │ 20   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ tools/repo           │ 40   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ tools/android_repack │ 45   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
+│ terminal/tmux        │ 50   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ terminal/fzf         │ 60   │ 不支持     │ 不支持     │ 可执行     │ 已完成     │
+│ editor/astronvim_v5  │ 70   │ 可执行     │ 可执行     │ 待构建下载 │ 待构建下载 │
+│ harness              │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ lightmind            │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+│ wtool-base           │ 100  │ 不支持     │ 不支持     │ 不支持     │ 已完成     │
+└──────────────────────┴──────┴────────────┴────────────┴────────────┴────────────┘
 ```
 
-- **亮绿 ●** — 项目提供了对应的脚本，这项能力由脚本自己定义
-- **绿 ●** — `wtool` 的通用机制就能办到
-- **灰 ·** — 没这项能力
+每格是四种状态之一（终端里带颜色）：`不支持` 红、`可执行` 黄、`待构建下载` 蓝、`已完成` 绿。
+`install` 和 `publish` 是**你这台机器上的进度**，装过、发布过才会变绿。
 
-加 `--verbose` 会在表下面列出每个项目的细节：装过没有、provision 跑过没有、发布过什么版本。
+加 `--verbose` 会在表下面列出每个项目的细节（装过没有、provision 跑过没有、发布过什么版本），`--summary` 只多一行汇总。不带参数的 `wtool` 是 `--verbose --summary`。
 
-### `wtool build`
+### `wtool build` / `wtool download`
 
 ```bash
 wtool build                       # 列出哪些项目有 build.sh
 wtool build editor/astronvim_v5
 wtool build astronvim_v5 --dry-run
+
+wtool download                    # 列出哪些项目有 download.sh
+wtool download editor/astronvim_v5
 ```
 
-`build` 只做一件事：找到项目的 `build.sh` 然后跑它。`wtool` 不对"构建"做任何假设——编什么、要不要起容器、产物放哪，全由脚本决定。
+`build` 只做一件事：找到项目的 `build.sh` 然后跑它。`wtool` 不对"构建"做任何假设——编什么、要不要起容器、产物放哪，全由脚本决定。`download` 同理，跑的是 `download.sh`。
+
+**两者产出落在完全相同的路径**，所以 `build + install` 和 `download + install` 结果一样，装的时候不需要知道东西是哪来的。编一次几十分钟到几小时，下载几分钟——能下载就下载。
 
 约定有几条：
 
@@ -190,12 +214,16 @@ wtool build astronvim_v5 --dry-run
 ### `wtool install`
 
 ```bash
+cd <工作区目录>                            # install 认的是项目目录
 wtool install terminal/tmux
 wtool install ./terminal/tmux
 wtool install terminal/tmux --dry-run
 wtool install terminal/tmux --force      # 目录有未提交改动也照装
 wtool install terminal/tmux --no-script  # 只做通用机制，不跑项目的 install.sh
 ```
+
+`install` 要的是一个**项目目录**：在工作区根目录下写相对路径 `terminal/tmux`，
+在别的地方就写全路径。（`build` / `download` / `publish` 不一样，它们认项目名，在哪个目录跑都行。）
 
 顺序是固定的：
 
@@ -210,15 +238,19 @@ wtool install terminal/tmux --no-script  # 只做通用机制，不跑项目的 
 ### `wtool uninstall`
 
 ```bash
-wtool uninstall terminal/tmux
-wtool uninstall --id terminal/tmux
+cd <工作区目录>
+wtool uninstall terminal/tmux       # 给项目目录
+wtool uninstall --id terminal/tmux  # 给项目名：在哪个目录跑都行
 ```
 
 逆着 `install` 的记录来，把链接删掉、shell 块抹掉、文件还原。如果某个软链接被换成了真实文件（你自己改过），它会保留不动，不会误删你的东西。
 
+**如果项目自带 `install.sh`，会先跑一次 `install.sh --uninstall`**，让项目自己把它装的大件（编译产物、下载的包）收走，然后再由 `wtool` 撤链接和状态。顺序不能反：链接先没了，脚本可能就找不到自己装的东西了。
+
 ### `wtool provision`
 
 ```bash
+cd <工作区目录>
 wtool provision os/ubuntu --with-system
 ```
 
@@ -258,7 +290,9 @@ wtool bootstrap
 wtool bootstrap --install-only     # 不装系统包、不编译，只做软链接和 shell 块
 ```
 
-按 `priority` 顺序把所有项目过一遍：provision → build → install。
+按 `priority` 顺序把所有项目过一遍：`provision` → `install`。
+
+**它不替你决定"编还是下"。** 需要先产出东西的项目（有 `build.sh` 或 `download.sh` 而还没产出过的）会被跳过，并在最后把该跑的命令列出来，由你自己选 `wtool build` 还是 `wtool download`。
 
 **第一次装一台新机器，用这条命令就够了。**
 
@@ -294,6 +328,7 @@ wtool env --json           # 给脚本用
 | `terminal/tmux` | [allinkernel/wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置与状态脚本 |
 | `terminal/fzf` | [allinkernel/wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 预编译二进制 |
 | `tools/repo` | [allinkernel/wtool-repo](https://github.com/allinkernel/wtool-repo) | repo 工具 |
+| `tools/android_repack` | [allinkernel/wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像解包 / 改包 / 重签 |
 | `editor/astronvim_v5` | [allinkernel/wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | Neovim 环境的构建与发布 |
 | `editor/astronvim_v5/astronvim_v5_config` | [allinkernel/wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 上面那套的具体配置 |
 | `editor/astronvim_v5/nvim` | [neovim/neovim](https://github.com/neovim/neovim) | 上游 Neovim 源码（不是我们的项目） |
@@ -314,8 +349,9 @@ wtool env --json           # 给脚本用
 **装完发现某个链接不对**
 
 ```bash
+cd <工作区目录>
 wtool status                       # 看哪些登记的链接不见了
-wtool install <项目> --force       # 重新装一遍
+wtool install <项目目录> --force    # 重新装一遍
 ```
 
 `install` 是幂等的，重装不会出问题。
@@ -323,7 +359,8 @@ wtool install <项目> --force       # 重新装一遍
 **想彻底退回去**
 
 ```bash
-wtool uninstall <项目>              # 一个项目
+cd <工作区目录>
+wtool uninstall <项目目录>          # 一个项目
 ./uninstall.sh                     # 整个工作区（在工作区根目录跑）
 ```
 
@@ -338,7 +375,7 @@ exec zsh
 **想看看 `wtool` 到底把东西放哪了**
 
 ```bash
-wtool doctor                       # 环境、路径、状态目录
+wtool doctor                       # 环境、路径、状态目录、编译安装前缀
 wtool list                         # 每条软链接的目标
-cat ~/.local/state/wtool/<项目 ID>/journal.tsv   # 这个项目做过什么
+wtool status                       # 登记的东西是不是都还在
 ```
