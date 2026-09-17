@@ -6,6 +6,51 @@
 
 ---
 
+## 0. 在一台新机器上，从这里开始
+
+**只有两条命令。** 第一步装 `wtool` 本身，第二步让它去装项目。
+
+```bash
+# 1. 把仓库拿到本地（第一次）
+repo init -u ssh://git@github.com/allinkernel/w_manifests.git -b wtool
+repo sync
+
+# 2. 装 wtool 自己 —— 会准备好运行环境（python3/git/…），然后停下
+cd <工作区目录>
+./install.sh
+
+# 3. 让当前 shell 认识 wtool（PATH 是 shell 启动时定下的，所以要重读一次）
+exec $SHELL
+#    或者干脆重开一个终端
+
+# 4. 装那些不需要你决策的项目
+wtool bootstrap
+```
+
+**第 2 步为什么到那里就停？** 因为它只负责「让 `wtool` 这条命令能用」，
+不装任何项目。这样失败原因清清楚楚：`install.sh` 挂了 = 系统环境问题
+（缺依赖、源连不上）；`wtool bootstrap` 挂了 = 某个项目自己的问题。
+混在一条命令里，你看到一屏输出，分不清该修哪一头。
+
+第 2 步跑完它会把后面该做什么直接打在屏幕上，不用回来翻文档。
+
+**不想在真机上试？** 用容器跑一遍（`--network=host` 是必须的，
+容器里的 `127.0.0.1` 是它自己）：
+
+```bash
+# 从头走一遍，每一步自己决定（等价于"刚 repo sync 完"）
+docker run --rm -it --network=host -v "$PWD":/wtool:ro \
+  ubuntu:24.04 bash /wtool/bootstrap/scripts/container-raw.sh
+
+# 或者一步到位，直接给一个装好的环境
+docker run --rm -it --network=host -v "$PWD":/wtool:ro \
+  ubuntu:24.04 bash /wtool/bootstrap/scripts/container-shell.sh
+```
+
+（`$PWD` 要换成工作区目录；两个容器脚本的差别见第 4.3 节。）
+
+---
+
 ## 1. 项目总览
 
 ### 1.1 它是怎么工作的
@@ -42,25 +87,48 @@
 **这三个脚本在不在，就代表这个项目有没有这三项能力。** `wtool` 不带参数跑一下，会看到一张表，哪一项亮着绿灯就说明这个项目能做什么：
 
 ```
-项目                           prio  build  install  publish
-----------------------------------------------------------------
-bootstrap                      5     ·      ●        ●
-os/ubuntu                      5     ·      ●        ●
-shell/zsh                      20    ·      ●        ●
-editor/astronvim_v5            70    ●      ●        ●
-terminal/tmux                  50    ·      ●        ●
+┌──────────────────────┬──────┬────────────┬────────────┬────────────┬────────────┐
+│ 项目                 │ prio │ build      │ download   │ install    │ publish    │
+├──────────────────────┼──────┼────────────┼────────────┼────────────┼────────────┤
+│ bootstrap            │ 5    │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ os/ubuntu            │ 5    │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
+│ shell/oh-my-zsh      │ 10   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ shell/zsh            │ 20   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ tools/repo           │ 40   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ terminal/tmux        │ 50   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ terminal/fzf         │ 60   │ 不支持     │ 不支持     │ 已完成     │ 可执行     │
+│ editor/astronvim_v5  │ 70   │ 可执行     │ 可执行     │ 待构建下载 │ 待构建下载 │
+│ harness              │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
+│ lightmind            │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
+│ wtool-base           │ 100  │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
+└──────────────────────┴──────┴────────────┴────────────┴────────────┴────────────┘
 ```
 
-- 亮绿色的 ● ：项目提供了对应的脚本，能力由脚本定义
-- 绿色的 ● ：`wtool` 的通用机制就能办到（大多数纯配置项目都是这种）
-- 灰色的 · ：这个项目没这项能力
+每一格是**四种状态之一**，终端里各有颜色：
+
+| 状态 | 颜色 | 意思 |
+|---|---|---|
+| **不支持** | 红 | 这个项目没这项能力（比如纯配置项目不能 build） |
+| **可执行** | 黄 | 现在就能跑 |
+| **待构建下载** | 蓝 | 能力有，但得先 `build` 或 `download` |
+| **已完成** | 绿 | 跑过了 |
+| | 亮绿 | 这是**能力来源**：项目自带脚本（`scripts/build.sh` 等） |
+
+最后一列 `publish` 对大多数项目是「可执行」还是「已完成」取决于你发布过没有。
+
+**这四列是一条流水线，后面的依赖前面的：**
+
+```
+build 或 download  →  install  →  publish
+```
+
+前置没做时 `install` / `publish` 会**直接报错告诉你去跑哪条**，不会替你跑 ——
+因为「自己编」和「下载别人编好的」是两个不该由工具替你做的决定。
 
 【图片占位】![wtool 能力总览](.pic/table.png)
 
-<!-- TODO: 在装好 wtool 的机器上执行下面这条命令，把输出截图保存为 .pic/table.png
-     wtool
-     建议终端宽度 100 列以上，保留颜色，这样"亮绿/绿/灰"的区别看得出来。
--->
+<!-- TODO: 在装好 wtool 的机器上执行 `wtool`，把输出截图保存为 .pic/table.png
+     建议终端宽度 100 列以上、保留颜色，这样四种状态的区别看得出来。 -->
 
 ### 1.2 现在有哪些项目
 
@@ -272,14 +340,21 @@ wtool publish --dry-run          # 先看计划
 ### 3.5 其他命令
 
 ```bash
-wtool list                       # 看已登记的软链接
-wtool status                     # 检查登记的链接是不是都还在
-wtool validate <项目目录>         # 检查某个项目的 wtool.xml 写得对不对
-wtool env                        # 输出可用的环境变量
-wtool init <目录>                 # 新建一个项目（生成模板）
-wtool provision <项目目录>         # 装系统包 / 编译源码（不可逆，单独一条命令）
+wtool table [--verbose|--summary]   # 和能力总览同一张表，可加细节或只看汇总
+wtool doctor                        # 表格 + 环境诊断（版本、系统、状态目录、缺什么）
+wtool status [<项目目录>]            # 检查登记的软链接是不是都还在
+wtool list                          # 看已登记的软链接
+wtool env [--quiet|--json]          # 输出 wtool 提供的环境变量（带中文说明）
+wtool validate <项目目录>            # 检查某个项目的 wtool.xml 写得对不对
+wtool init <目录> [--id ID] [--priority N] [--all]   # 新建一个 wtool 项目
+wtool provision <项目目录> [--with-system]           # 装系统包 / 编译源码（不可逆，单独一条）
 wtool version
 ```
+
+`build` / `download` / `install` / `uninstall` / `publish` / `bootstrap` 见上面几节。
+所有命令都支持 `--dry-run`：先打印计划、不真的动手。
+
+`wtool` 不带参数跑一下就是第 1 节那张能力总览表。
 
 ---
 
