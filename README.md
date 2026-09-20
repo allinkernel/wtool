@@ -137,7 +137,6 @@ build 或 download  →  install  →  publish
 |---|---|
 | [wtool-base](https://github.com/allinkernel/wtool) | 你现在看的这份文档。只有文档，没有工具 |
 | [wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体：`wtool` 命令、安装/卸载机制、清单解析、发布逻辑。其他项目都靠它 |
-| [wtool-harness](https://github.com/allinkernel/wtool-harness) | 给 AI 编码助手用的工作笔记和约定，不是给人看的 |
 | [wtool-os-ubuntu](https://github.com/allinkernel/wtool-os-ubuntu) | Ubuntu 上要装的系统软件包清单，以及把 apt 源换成国内镜像 |
 | [wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 自身的配置和补全别名 |
 | [wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh) | oh-my-zsh 本体，带自己的定制和插件选择 |
@@ -168,7 +167,6 @@ build 或 download  →  install  →  publish
 | 项目 | 版本 | 包 | 大小 |
 |---|---|---|---|
 | `bootstrap` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-bootstrap/releases/tag/snapshot-2026-09-15) | [bootstrap-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz) | 86.4K |
-| `harness` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-harness/releases/tag/snapshot-2026-09-15) | [harness-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz) | 30.4K |
 | `lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
 | `os/ubuntu` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/snapshot-2026-09-15) | [os-ubuntu-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz) | 4.0K |
 | `shell/oh-my-zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/snapshot-2026-09-15) | [shell-oh-my-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz) | 3.0M |
@@ -184,8 +182,6 @@ build 或 download  →  install  →  publish
 mkdir -p ~/self && cd ~/self
 curl -fL -o bootstrap-2026-09-15.tar.gz \
   https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz
-curl -fL -o harness-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz
 curl -fL -o themes-typora-lightmind-2026-09-15.tar.gz \
   https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz
 curl -fL -o os-ubuntu-2026-09-15.tar.gz \
@@ -203,7 +199,6 @@ curl -fL -o tools-repo-2026-09-15.tar.gz \
 curl -fL -o wtool-base-2026-09-15.tar.gz \
   https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz
 tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf harness-2026-09-15.tar.gz
 tar -xf themes-typora-lightmind-2026-09-15.tar.gz
 tar -xf os-ubuntu-2026-09-15.tar.gz
 tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
@@ -223,7 +218,6 @@ tar -xf wtool-base-2026-09-15.tar.gz
 ```powershell
 $d = "$HOME\self"; New-Item -ItemType Directory -Force -Path $d | Out-Null; Set-Location $d
 Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz" -OutFile "bootstrap-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-harness/releases/download/snapshot-2026-09-15/harness-2026-09-15.tar.gz" -OutFile "harness-2026-09-15.tar.gz"
 Invoke-WebRequest -Uri "https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz" -OutFile "themes-typora-lightmind-2026-09-15.tar.gz"
 Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz" -OutFile "os-ubuntu-2026-09-15.tar.gz"
 Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz" -OutFile "shell-oh-my-zsh-2026-09-15.tar.gz"
@@ -233,7 +227,6 @@ Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/release
 Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz" -OutFile "tools-repo-2026-09-15.tar.gz"
 Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz" -OutFile "wtool-base-2026-09-15.tar.gz"
 tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf harness-2026-09-15.tar.gz
 tar -xf themes-typora-lightmind-2026-09-15.tar.gz
 tar -xf os-ubuntu-2026-09-15.tar.gz
 tar -xf shell-oh-my-zsh-2026-09-15.tar.gz

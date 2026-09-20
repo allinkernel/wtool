@@ -328,7 +328,6 @@ wtool env --json           # 给脚本用
 |---|---|---|
 | `wtool-base` | [allinkernel/wtool](https://github.com/allinkernel/wtool) | 文档。你正在看的这份 |
 | `bootstrap` | [allinkernel/wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体 |
-| `harness` | [allinkernel/wtool-harness](https://github.com/allinkernel/wtool-harness) | 给 AI 助手用的工作笔记 |
 | `os/ubuntu` | [allinkernel/wtool-os-ubuntu](https://github.com/allinkernel/wtool-os-ubuntu) | Ubuntu 系统包与 apt 镜像 |
 | `shell/zsh` | [allinkernel/wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 配置 |
 | `shell/oh-my-zsh` | [allinkernel/wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh) | oh-my-zsh 本体 |
