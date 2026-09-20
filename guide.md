@@ -48,8 +48,9 @@ terminal/tmux/
   <!-- 把本目录的 tmux.conf 软链到 ~/.tmux.conf -->
   <link src="tmux.conf" dest=".tmux.conf"/>
 
-  <!-- 这段环境变量会被写进 shell 配置里 source 掉 -->
-  <env src="env.zsh" shells="zsh,bash"/>
+  <!-- 环境变量/命令：zsh 和 bash 各一份（内容等价） -->
+  <env src="env.zsh"  shells="zsh"/>
+  <env src="env.bash" shells="bash"/>
 
   <!-- 需要装系统包时（不可逆，和上面两条分开） -->
   <provision src="provision/packages.yaml" marker="tmux-deps"/>
@@ -67,6 +68,12 @@ terminal/tmux/
 | `<publish kind>` | 怎么发布到 GitHub Release | —— |
 
 另外还有两类，用到时再看对应项目的 `wtool.xml`：`<system-file>`（写 `$HOME` 之外的系统文件，比如换 apt 源；写前备份，卸载时还原）和 `<source>`（源码编译型项目）。
+
+> **`<env>` 要两个 shell 各写一份**（`env.zsh` + `env.bash`，内容等价）。
+> 有人机器上没有 zsh，只写一份的话另一个 shell 的用户敲命令是 `command not found`，
+> 而 shell 配置里看起来明明装过了 —— 这种半装状态最难查。
+> 如果内容两个 shell 都认（只 export 变量、不做 zsh/bash 特有的事），
+> 也可以一份 `env.sh` 配 `shells="zsh,bash"`，`tools/android_repack` 就是这么写的。
 
 `priority` 决定处理顺序，数字小的先来。`bootstrap` 是 5，因为它要最早把环境变量准备好；纯配置项目一般 100 也无所谓。
 
