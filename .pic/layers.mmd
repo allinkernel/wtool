@@ -1,0 +1,26 @@
+%% 三层路径图 —— wtool-base/README.md §1.4 用
+%% 改完跑 .pic/render.sh 重新生成 layers.png
+flowchart TB
+    SRC["源码 + scripts/"]
+    GH(["发布页上现成的产物包"])
+
+    subgraph L1["① 项目目录 —— 产物，可以整目录删掉"]
+        REL["release/系统_版本/"]
+    end
+
+    subgraph L2["② ~/.wtool/ —— 影子 $HOME，实体都住这儿"]
+        WUSR["usr/"]
+        WCFG[".config/项目名<br/>.local/share/项目名"]
+    end
+
+    subgraph L3["③ 你的 $HOME —— 只有软链，没有实体"]
+        HUSR["~/usr"]
+        HCFG["~/.config/项目名<br/>~/.local/share/项目名"]
+    end
+
+    SRC -->|wtool build| REL
+    GH -.->|wtool download| REL
+    REL -->|wtool install| WUSR
+    REL -->|wtool install| WCFG
+    WUSR -->|wtool install| HUSR
+    WCFG -->|wtool install| HCFG

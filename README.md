@@ -187,6 +187,11 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 <项目>/
 ├── wtool.xml            项目声明
 ├── scripts/             这个项目专属的动作脚本
+│   ├── build.sh / download.sh / install.sh
+│   ├── downloads.sh     ← publish 生成的下载清单（§1.3），是生成物但要进 Git
+│   └── publish.sh
+├── docs/
+│   └── download.md      ← publish 生成的下载页，README 里指向它
 ├── release/             ← build 或 download 的产物，不进 Git
 │   └── ubuntu_22/       按"系统_版本"分目录
 │       ├── main/        底座：主程序 + 基础配置
@@ -233,20 +238,63 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   repo sync 之后 download 一遍
 ```
 
+#### `publish` 干三件事，第三件不能省
+
+发布不是"传上去就完了"。`publish.sh` 的契约是**三件事**：
+
+| # | 做什么 | 产出 |
+|---|---|---|
+| 1 | 上传：把 `publish/` 里的东西推到 GitHub Release | 线上多一个 tag，底下挂着一堆资产 |
+| 2 | **写下载清单** | `scripts/downloads.sh` —— `download.sh` 会 source 它，照着里面的命令下 |
+| 3 | **写下载页** | `docs/download.md` —— 给人看的：这一版是什么、直链在哪、要敲哪条命令 |
+
+项目自己的 `README.md` 里留一行链接指到 `docs/download.md` 就行，
+不用把一长串文件名的链接抄在 README 正文里 —— 那些是**每次发布会变**的东西。
+
+**为什么 `publish` 能提前写出这两个文件？** 因为发布地址是**拼出来的**，不是传完才知道：
+
+```
+https://github.com/<owner>/<repo>/releases/download/<tag>/<文件名>
+```
+
+`publish.sh` 在推之前就知道 `<owner>/<repo>`、`<tag>` 和每个文件的名字，
+所以它能先把这三个文件写好再去传，传完回头核对大小和 sha256。
+
+**两个生成物长什么样**：
+
+```sh
+# scripts/downloads.sh —— 由 publish.sh 生成，别手改
+# download.sh 先定义好 wt_dl_add，再 source 这个文件，里面的命令就一条条跑起来
+WTOOL_DL_TAG='snapshot-2026-09-20-ubuntu-20.04'
+WTOOL_DL_BASE='https://github.com/allinkernel/wtool-astronvim_v5/releases/download/snapshot-2026-09-20-ubuntu-20.04'
+wt_dl_add 'dist.json'                                 '<sha256>'
+wt_dl_add 'astronvim_v5-release-ubuntu20.04-vol01'    '<sha256>'
+wt_dl_add 'astronvim_v5-release-ubuntu20.04-vol02'    '<sha256>'
+```
+
+```
+docs/download.md     这一版发了什么、怎么下、下完敲哪条命令（人读，也是 README 指过去的那一页）
+```
+
+**为什么单独一个清单文件，而不是让 `publish` 覆写整个 `download.sh`？**
+因为 `download.sh` 里除了"下哪些文件"，还有一堆跟本次发布无关的策略 ——
+并发几路、断线怎么续、走不走代理、`.todo.tsv` 队列怎么排。
+那些不该被一次发布改写。清单只描述**这次发了什么**，策略留在脚本里。
+
+> 这两个文件**是文本，要提交进仓库** —— 不然别人 `repo sync` 下来，
+> `download.sh` 不知道最新一版在哪。
+> `publish` 跑完会把该提交的东西打出来提醒你，但**不替你 commit**：
+> 这个仓库的改动都要过检视闸门（§3.4）。
+
 ### 1.4 装的东西放在哪：三层
 
-这是整套设计里最值得记住的一件事 —— **每一层只放一种东西**。
+这是整套设计里最值得记住的一件事 —— **每一层只放一种东西**，
+而且**每一层只由一条命令负责搬运**。
 
-```
-   ①  release/<系统_版本>/      产物    可以整目录删掉，删了等于"没构建过"
-          │  install 读
-          ▼
-   ②  ~/.wtool/                实体    它是 wtool 版的 $HOME，路径一一对应
-          │  引擎建软链
-          ▼
-   ③  你的 $HOME/               软链    ~/.config/xxx 之类，全都是软链
-                                       ~/.zshrc 里只多一小段 loader
-```
+![三层路径：release/ → ~/.wtool/ → $HOME](.pic/layers.png)
+
+> 图源是 `.pic/layers.mmd`（Mermaid 文本），改了跑 `sh .pic/render.sh` 重新生成 PNG。
+> 纯文本环境看下面这张对照表是一样的。
 
 **`~/.wtool/` 是"影子家目录"**：它按 XDG 规范一一对应你的家目录，只是东西都住在里面。
 
@@ -277,10 +325,6 @@ pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   re
 **引擎自己用的东西**（自举、中转软链、临时文件）都在 `~/.wtool/wtool-work-dir/` 里 ——
 目录名就是它的用途。**状态记录**（谁装过、谁发布过）在 `~/.local/state/wtool/`，
 这个位置是 XDG 标准给"状态"用的，你不会顺手把它当缓存删掉。
-
-【图片占位】![三层路径](.pic/layers.png)
-
-<!-- TODO: 画一张三层路径图保存为 .pic/layers.png，比 ASCII 图更直观 -->
 
 ### 1.5 能力和进度：那张表
 
@@ -383,31 +427,37 @@ build 或 download  →  install  →  publish
 
 ### 1.7 现在有哪些项目
 
-| 项目 | 一句话简介 |
+**下面这张表就是全部的 wtool 项目**，判据只有一个：**目录里有 `wtool.xml`**（§1.5）。
+顺序和裸跑 `wtool` 得到的那张表一致（按 prio 排）。
+
+| 项目 | 仓库 | 一句话简介 |
+|---|---|---|
+| `bootstrap` | [wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体：`wtool` 命令、安装/卸载机制、清单解析、发布逻辑。其他项目都靠它 |
+| `os/ubuntu` | [wtool-os-ubuntu](https://github.com/allinkernel/wtool-os-ubuntu) | Ubuntu 上要装的系统软件包清单，以及把 apt 源换成国内镜像 |
+| `shell/oh-my-zsh` | [wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh) | oh-my-zsh 本体，带自己的定制和插件选择 |
+| `shell/zsh` | [wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 自身的配置和补全别名 |
+| `tools/repo` | [wtool-repo](https://github.com/allinkernel/wtool-repo) | `repo` 工具（管理多仓库的那个）和它的快捷命令 |
+| `tools/android_repack` | [wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像"解包 → 改 → 重新打包"的流水线 |
+| `tools/gerrit-gate` | [wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | 本机的代码检视闸门（Gerrit），改动要过它才进主线 |
+| `tools/dsh-remote` | [wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 不在电脑前时用手机接管会话 |
+| `harness/dsh-conf` | [wtool-dsh-conf](https://github.com/allinkernel/wtool-dsh-conf) | 助手自己的配置：提示词、技能、profile |
+| `terminal/tmux` | [wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置，外加一组显示 CPU/内存/磁盘/网络的小脚本 |
+| `terminal/fzf` | [wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 的预编译二进制，省得每台机器重编 |
+| `editor/astronvim_v5` | [wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | 一整套 Neovim 环境：编译 nvim、装插件、装语言服务器、打成发布包 |
+
+**下面这些也在工作区里、也是独立的仓库，但不是 wtool 项目** —— 目录里没有 `wtool.xml`，
+所以 `wtool install` / `wtool bootstrap` 不会碰它们：
+
+| 仓库 | 为什么不是 |
 |---|---|
-| [wtool-base](https://github.com/allinkernel/wtool) | 你现在看的这份文档。只有文档，没有工具 |
-| [wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体：`wtool` 命令、安装/卸载机制、清单解析、发布逻辑。其他项目都靠它 |
-| [wtool-os-ubuntu](https://github.com/allinkernel/wtool-os-ubuntu) | Ubuntu 上要装的系统软件包清单，以及把 apt 源换成国内镜像 |
-| [wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 自身的配置和补全别名 |
-| [wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh) | oh-my-zsh 本体，带自己的定制和插件选择 |
-| [wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置，外加一组显示 CPU/内存/磁盘/网络的小脚本 |
-| [wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 的预编译二进制，省得每台机器重编 |
-| [wtool-repo](https://github.com/allinkernel/wtool-repo) | `repo` 工具（管理多仓库的那个）和它的快捷命令 |
-| [wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像"解包 → 改 → 重新打包"的流水线 |
-| [wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | 本机的代码检视闸门（Gerrit），改动要过它才进主线 |
-| [wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 不在电脑前时用手机接管会话 |
-| [wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | 一整套 Neovim 环境：编译 nvim、装插件、装语言服务器、打成发布包 |
-| [wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 上面那套环境的具体配置（快捷键、主题、插件选择） |
-| [typora-LightMindTheme](https://github.com/allinkernel/typora-LightMindTheme) | Typora 的一个自制主题 |
+| [wtool](https://github.com/allinkernel/wtool) —— 你现在看的这份文档 | 纯文档，没有任何"装上去"的东西 |
+| [wtool-harness](https://github.com/allinkernel/wtool-harness) | 助手的笔记和 `AGENTS.md`，同样是纯文档 |
+| [wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 它是上一行 `editor/astronvim_v5` 那套环境的一部分，跟着那套一起发。🚧 将来会给它自己一份 `wtool.xml`，那时它才会单独出现在表里 |
+| [neovim](https://github.com/neovim/neovim) | 上游仓库，我们既没权限推、也不能往里塞文件 |
+| [typora-LightMindTheme](https://github.com/allinkernel/typora-LightMindTheme) | Typora 主题，只有素材和样式文件 |
 
-每个项目的细节看它自己的 README（点上面的名字）。
-
-> 上面这些仓库**不一定都是 wtool 项目**。判断标准只有一个：目录里有没有 `wtool.xml`。
-> 纯文档、纯素材的仓库（比如这份文档自己）没有它，也就不参与 `wtool install`。
->
-> 反过来也一样：第 1.5 节那张表里可能出现**这里没列**的条目 —— 那些是助手自用、
-> 或者还没建独立 GitHub 仓库的内部项目（比如 `harness/dsh-conf`）。要完整的清单，
-> 看表而不是看这份列表。
+> 这份列表是给人看的，**要准确清单以运行结果为准**：裸跑 `wtool` 就是那张表（§1.5）。
+> 两边不一致时，以表为准 —— 表是拿目录里有没有 `wtool.xml` 现算出来的。
 
 ---
 
@@ -751,11 +801,15 @@ docker run --rm -it --network=host \
 | 文件 | 什么时候跑 | 干什么 |
 |---|---|---|
 | `build.sh` | `wtool build <项目>` | 自己编，**产物写进项目的 `release/`** |
-| `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，**放到 `release/` 里完全相同的位置** |
+| `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，**放到 `release/` 里完全相同的位置**。下哪些文件由 `scripts/downloads.sh`（`publish` 生成的清单）说了算 |
 | `install.sh` | `wtool install <项目目录>` | 把 `release/` 铺进 `~/.wtool/usr`；🚧 **不建 `$HOME` 软链、不写 rc**（那是引擎按 `wtool.xml` 干的 —— 今天项目脚本还自己建） |
 | `install.sh --uninstall` | `wtool uninstall <项目目录>` | 撤销上面做的 |
-| `publish.sh` | `wtool publish <项目>` | 只在"打成两个包"不够用时才需要，很少见 |
+| `publish.sh` | `wtool publish <项目>` | 上传 + 顺手写 `scripts/downloads.sh` 和 `docs/download.md`（§1.3）。只有需要产物的项目才有它 |
 | `extract.sh` | 手动（只有浏览器、连 wtool 都还没装的机器） | 校验并解开分卷到 `release/`，**不装**（新架构里这活已经归引擎的 `wtool unpack-release`） |
+
+**`publish.sh` 生成的那两个文件不是"顺便"，是契约的一部分**：
+`download.sh` 靠 `scripts/downloads.sh` 知道该下什么，人靠 `docs/download.md` 知道该点哪。
+项目 `README.md` 里只留一行指向 `docs/download.md`。
 
 **`build` 和 `download` 是二选一的两条路，结果等价。** 编一次几十分钟到
 几小时，下载几分钟——能下载就下载。两条路把产物放进同一个 `release/` 目录，
