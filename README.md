@@ -263,6 +263,10 @@ pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   re
 （早先的版本用的是 `~/.wtool/config/xxx` 这种名字，两边对不上，
 需要对着文档查——现在不用了。）
 
+**反过来也成立**：`~/.wtool/` 下面**不会出现你 `$HOME` 里没有的路径**。
+引擎自己用的东西（自举、中转软链、临时文件）都关在 `~/.wtool/wtool-work-dir/` 里，
+那是唯一一个故意不像家目录的目录。
+
 **你的家目录里不该多出一个实体文件。** 所以卸载是干净的：
 `wtool uninstall <项目>` 把②里的实体和③里的软链一起撤掉，家目录回到装之前。
 
@@ -354,7 +358,7 @@ build 或 download  →  install  →  publish
 |---|---|
 | `wtool.xml` 存在即项目、`<link>` 三段映射、软链只在 `$HOME` | 🚧 目标形态；今天 `wtool.xml` 里的写法还是旧的 `src=`/`dest=` |
 | 影子家目录（实体在 `~/.wtool`，路径和 `$HOME` 一一对应） | 🚧 目标形态；今天产物都在 `~/.wtool/usr/` 下，`~/usr` 这条软链还没建 |
-| 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/links/` |
+| 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/links/`（最后这个违反了"影子家目录里只放家目录里有的路径"，要收进来） |
 | `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（`publish/` 里放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
 | 执行顺序：先跑项目的 `install.sh`，再铺 `$HOME` 软链 | 🚧 今天是反的（先铺软链再跑脚本） |
 | `build` / `download` 写进项目的 `release/` 再给 `install` 读 | 🚧 还没改，目前产物直接落在 `~/.wtool/usr` |
