@@ -119,7 +119,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 
 | 命令 | 做什么 | 要 sudo 吗 | 碰网络吗 | 可撤吗 |
 |---|---|---|---|---|
-| `wtool install <路径>` | 把 `release/` 铺进 `~/.wtool`，再在 `$HOME` 里建软链、加 shell 集成 | **❌ 永不要** | **❌ 永不联网** | **完全可逆**，一条命令原样撤回 |
+| `wtool install <路径>` | 把 `release/` 铺进 `~/.wtool/usr`，再在 `$HOME` 里建软链、加 shell 集成 | **❌ 永不要** | **❌ 永不联网** | **完全可逆**，一条命令原样撤回 |
 | `wtool uninstall <路径>` | 撤销 `install` | **❌ 永不要** | ❌ | —— |
 | `wtool sudo-install <路径>` | 装系统软件包、改系统文件（换 apt 源之类） | 🚧 **可能要** | ✅ | ⚠️ apt 包撤不干净；`/etc` 下的文件可以还原 |
 | `wtool sudo-uninstall <路径>` | 撤销 `sudo-install`：卸载 apt 包 + 还原 `/etc` | 🚧 **可能要** | ❌ | —— |
@@ -355,7 +355,7 @@ build 或 download  →  install  →  publish
 | `wtool.xml` 存在即项目、`<link>` 三段映射、软链只在 `$HOME` | 🚧 目标形态；今天 `wtool.xml` 里的写法还是旧的 `src=`/`dest=` |
 | 影子家目录（实体在 `~/.wtool`，路径和 `$HOME` 一一对应） | 🚧 目标形态；今天产物都在 `~/.wtool/usr/` 下，`~/usr` 这条软链还没建 |
 | 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/links/` |
-| `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（旁边放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
+| `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（`publish/` 里放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
 | 执行顺序：先跑项目的 `install.sh`，再铺 `$HOME` 软链 | 🚧 今天是反的（先铺软链再跑脚本） |
 | `build` / `download` 写进项目的 `release/` 再给 `install` 读 | 🚧 还没改，目前产物直接落在 `~/.wtool/usr` |
 | `pack-release` / `unpack-release` / `publish` 分成三条 | 🚧 打包和上传还是一条命令，也没有 `unpack-release` |
@@ -748,7 +748,7 @@ docker run --rm -it --network=host \
 |---|---|---|
 | `build.sh` | `wtool build <项目>` | 自己编，**产物写进项目的 `release/`** |
 | `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，**放到 `release/` 里完全相同的位置** |
-| `install.sh` | `wtool install <项目目录>` | 把 `release/` 铺进 `~/.wtool`；**不建 `$HOME` 软链、不写 rc**（那是引擎按 `wtool.xml` 干的） |
+| `install.sh` | `wtool install <项目目录>` | 把 `release/` 铺进 `~/.wtool/usr`；🚧 **不建 `$HOME` 软链、不写 rc**（那是引擎按 `wtool.xml` 干的 —— 今天项目脚本还自己建） |
 | `install.sh --uninstall` | `wtool uninstall <项目目录>` | 撤销上面做的 |
 | `publish.sh` | `wtool publish <项目>` | 只在"打成两个包"不够用时才需要，很少见 |
 | `extract.sh` | 手动（只有浏览器、连 wtool 都还没装的机器） | 校验并解开分卷到 `release/`，**不装**（新架构里这活已经归引擎的 `wtool unpack-release`） |
