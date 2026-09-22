@@ -238,6 +238,14 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   repo sync 之后 download 一遍
 ```
 
+**每条命令跟这两个目录的关系**（图源 `.pic/commands.mmd`）：
+
+![命令与 release/、publish/ 的关系](.pic/commands.png)
+
+一句话读法：**只有 `build` / `download` 往 `release/` 里写，只有 `pack-release` 往 `publish/` 里写；
+`install` 只读 `release/`，`publish` 只读 `publish/`。** 中间那两个虚线箭头是"绕一圈回来"：
+发布出去的东西，在另一台机器上又变回 `release/`。
+
 #### `publish` 干三件事，第三件不能省
 
 发布不是"传上去就完了"。`publish.sh` 的契约是**三件事**：

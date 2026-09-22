@@ -1,0 +1,20 @@
+%% 命令与 release/ publish/ 的关系 —— wtool-base/README.md §1.3 用
+%% 改完跑 .pic/render.sh 重新生成 commands.png
+flowchart LR
+    SRC["源码 + scripts/"]
+    GH(["GitHub Release 发布页"])
+    WT["~/.wtool/ → 你的 $HOME"]
+    GEN["scripts/downloads.sh<br/>docs/download.md"]
+
+    subgraph PROJ["项目目录（两个都进 .gitignore）"]
+        direction LR
+        REL["release/系统_版本/<br/>编译产物 + 下载产物"]
+        PUB["publish/<br/>分卷 + dist.json + hash"]
+    end
+
+    SRC -->|"wtool build"| REL
+    REL -->|"wtool pack-release"| PUB
+    PUB -->|"wtool publish"| GH
+    GH -.->|"wtool download<br/>wtool unpack-release"| REL
+    REL -->|"wtool install"| WT
+    PUB -.->|"顺手写"| GEN

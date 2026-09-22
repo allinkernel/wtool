@@ -8,21 +8,23 @@
 # 就得换成本地渲染。
 #
 # 用法：
-#   sh .pic/render.sh              # 渲染 .pic/layers.mmd
-#   sh .pic/render.sh foo.mmd      # 渲染指定的那个
+#   sh .pic/render.sh              # 渲染 .pic 下所有 .mmd
+#   sh .pic/render.sh .pic/x.mmd   # 只渲染指定的那个
 #
 # 代理：这台机器上出网要过 http://127.0.0.1:7897（没设就直连）。
 set -eu
 
 _dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
-_src=${1:-$_dir/layers.mmd}
-_out=${_src%.mmd}.png
 
-python3 - "$_src" "$_out" <<'PY'
+render_one() {
+    _src=$1
+    _out=${_src%.mmd}.png
+    python3 - "$_src" "$_out" <<'PY'
 import base64, json, os, subprocess, sys
 
 src, out = sys.argv[1], sys.argv[2]
-code = open(src, encoding='utf-8').read()
+with open(src, encoding='utf-8') as fh:
+    code = fh.read()
 payload = base64.urlsafe_b64encode(
     json.dumps({"code": code, "mermaid": {"theme": "default"}}).encode()
 ).decode()
@@ -34,8 +36,23 @@ if proxy:
     cmd += ["-x", proxy]
 cmd.append(url)
 
-code_ = subprocess.run(cmd, capture_output=True, text=True).stdout.strip()
+# mermaid.ink 会偶发连不上（HTTP 000），重试几次再放弃
+code_ = "000"
+for _ in range(4):
+    code_ = subprocess.run(cmd, capture_output=True, text=True).stdout.strip()
+    if code_ == "200" and os.path.getsize(out):
+        break
 if code_ != "200" or not os.path.getsize(out):
-    sys.exit("渲染失败：HTTP %s" % code_)
+    sys.exit("渲染失败：%s（HTTP %s）" % (src, code_))
 print("%s -> %s（%d 字节）" % (src, out, os.path.getsize(out)))
 PY
+}
+
+if [ $# -ge 1 ]; then
+    render_one "$1"
+else
+    for _f in "$_dir"/*.mmd; do
+        [ -e "$_f" ] || continue
+        render_one "$_f"
+    done
+fi

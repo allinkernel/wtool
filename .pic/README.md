@@ -18,14 +18,21 @@ README.md 和 guide.md 里有几处【图片占位】，需要人工截图后放
 
 ## 画出来的图（不是截图）
 
-`layers.png` 不是截图，是**画**出来的：源码是 `layers.mmd`（Mermaid 文本），
-渲染成 PNG 给不认 Mermaid 的阅读器看（GitHub 认得，右边栏那个 markdown 预览器不认）。
+两张，源码都是 Mermaid 文本（`.mmd`），渲染成 PNG 给不认 Mermaid 的阅读器看。
+**注意**：GitHub 自己会渲染 Mermaid，但这个仓库的图**故意只用 PNG** ——
+Typora 能看 PNG，harness 右边栏那个 markdown 预览器两者都不认（实测：它不带 Mermaid，
+也不解析文档里的相对图片路径）。
+
+| 图 | 用在哪 | 画什么 |
+|---|---|---|
+| `layers.png` | README §1.4 | 三层路径：`release/` → `~/.wtool/` → `$HOME`，命令标在箭头上 |
+| `commands.png` | README §1.3 | 每条命令与 `release/`、`publish/` 的关系（一条闭环） |
 
 改图就改 `.mmd`，然后：
 
 ```sh
-sh .pic/render.sh            # 渲染 layers.mmd
-sh .pic/render.sh foo.mmd    # 或别的
+sh .pic/render.sh                     # 渲染 .pic 下所有 .mmd
+sh .pic/render.sh .pic/layers.mmd     # 或只渲染一个
 ```
 
 渲染走的是 mermaid.ink 这个在线服务（原因和代价写在 `render.sh` 的注释里：
