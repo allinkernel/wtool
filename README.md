@@ -195,8 +195,9 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 └── publish/             ← pack-release 的产物，不进 Git
     ├── xxx-源码.zip     整个项目（不含 release/ 和 publish/）
     ├── xxx-源码-hash.txt
-    ├── xxx-release.zip  release/ 里的东西
-    └── xxx-release-hash.txt
+    ├── xxx-release.zip  产物包：release/ 里的东西（大项目切成 -vol01、-vol02…）
+    ├── xxx-release-hash.txt
+    └── dist.json        分卷清单：每一卷叫什么、多大、校验值是多少
 ```
 
 **`release/` 的四条规则**：
@@ -223,8 +224,8 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
   它**自带编译好的程序**，解开就能用，不需要源码、不需要编译器
 
 装到别的机器上时，**只需要产物包**。项目大到一个包传不完的时候，
-产物包会切成若干分卷，旁边配一份 `dist.json` 说明每一卷叫什么、多大、校验值是多少——
-`wtool unpack-release` 照着它校验和拼接，不需要人记顺序。
+产物包会切成若干分卷，放在项目的 `publish/` 里，旁边配一份 `dist.json` 说明每一卷叫什么、
+多大、校验值是多少——`wtool unpack-release` 照着它校验和拼接，不需要人记顺序。
 
 **这三个动作拼起来是一条闭环**，而且可以当成一条断言来验：
 
@@ -252,13 +253,14 @@ pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   re
 ```
 你的 $HOME                      ~/.wtool/
 ~/.config/astronvim_v5     ←→   ~/.wtool/.config/astronvim_v5
-~/.local/bin/nvim          ←→   ~/.wtool/.local/bin/nvim
-~/.local/share/astronvim_v5←→   ~/.wtool/.local/share/astronvim_v5
+~/usr                      ←→   ~/.wtool/usr
 ~/.tmux.conf               ←→   ~/.wtool/.tmux.conf
 ```
 
 路径长得一模一样，所以"这个文件从哪来的、删了会少什么"一眼就能看出来。
-（早先的版本用的是 `~/.wtool/usr/`、`~/.wtool/config/xxx` 这种名字，两边对不上，
+**编译产物、下载产物统一放在 `~/.wtool/usr/` 这一格**，`~/usr` 就是它接回 `$HOME`
+的那条软链——`~/usr/bin/nvim` 和 `~/.wtool/usr/bin/nvim` 是同一个东西。
+（早先的版本用的是 `~/.wtool/config/xxx` 这种名字，两边对不上，
 需要对着文档查——现在不用了。）
 
 **你的家目录里不该多出一个实体文件。** 所以卸载是干净的：
@@ -351,7 +353,7 @@ build 或 download  →  install  →  publish
 | | 状态 |
 |---|---|
 | `wtool.xml` 存在即项目、`<link>` 三段映射、软链只在 `$HOME` | 🚧 目标形态；今天 `wtool.xml` 里的写法还是旧的 `src=`/`dest=` |
-| 影子家目录（实体在 `~/.wtool`，路径和 `$HOME` 一一对应） | 🚧 目标形态；今天是 `~/.wtool/usr/` 那一套 |
+| 影子家目录（实体在 `~/.wtool`，路径和 `$HOME` 一一对应） | 🚧 目标形态；今天产物都在 `~/.wtool/usr/` 下，`~/usr` 这条软链还没建 |
 | 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/links/` |
 | `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（旁边放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
 | 执行顺序：先跑项目的 `install.sh`，再铺 `$HOME` 软链 | 🚧 今天是反的（先铺软链再跑脚本） |
@@ -514,7 +516,7 @@ wtool-install:   README.md -> wtool-base/README.md
 这个脚本只走四步：准备运行环境（缺 `python3`/`git` 就装上）、自举引擎到 `~/.wtool/wtool-work-dir/`（引擎自己的东西都收在这一个目录下，见 1.4）、补齐上面那些工作区入口、让 `wtool` 进 `PATH`。**做完就停，它不装任何项目**——屏幕最后会直接把接下来该敲的命令打给你（`exec $SHELL`，然后 `wtool sudo-bootstrap` / `wtool bootstrap`），照着走即可。
 
 **要编译产物的项目（现在只有 Neovim 那套）还有一步**：它的 Release 页面里除了源码包，
-还有产物包（大项目是若干分卷，配一个 `dist.json`）。把这些下到项目的 `release/` 目录下，
+还有产物包（大项目是若干分卷，配一个 `dist.json`）。把这些下到项目的 `publish/` 目录下，
 用 `wtool unpack-release <项目目录>` 校验并解开，再 `wtool install <项目目录>` 收尾。
 `unpack-release` 只认 `dist.json`，不需要你记分卷的顺序。
 
@@ -760,7 +762,7 @@ docker run --rm -it --network=host \
 
 发布过包的项目分两种。**纯源码包**（大多数项目）解开就是仓库目录树，没有额外脚本。
 **带编译产物的项目**（现在只有 Neovim 那套）Release 页面里会多带分卷和一份 `dist.json`——
-那是给**只能用浏览器下载**的机器用的：把它们下到同一个目录，
+那是给**只能用浏览器下载**的机器用的：把它们下到项目的 `publish/` 目录，
 `wtool unpack-release <项目目录>` 校验并解开，再用 `wtool install <项目目录>` 收尾。
 
 ### 4.5 不要手改的地方
