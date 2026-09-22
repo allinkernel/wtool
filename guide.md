@@ -137,7 +137,7 @@ wtool validate ./terminal/ripgrep
 |---|---|
 | `~/self/wtool/`（或你选的工作区目录） | 项目本体，都是 Git 仓库 |
 | `$WTOOL_PREFIX`（默认 `~/.wtool/usr`） | 项目产出的实体文件：编译出来的程序、下载下来的二进制 |
-| `~/.wtool/links/<项目 ID>` | 指向项目目录的稳定地址，配置文件里引用它就永远不怕仓库搬家 |
+| `~/.wtool/wtool-work-dir/links/<项目 ID>` | 指向项目目录的稳定地址，配置文件里引用它就永远不怕仓库搬家 |
 | `~/.wtool/.zshrc` 等 | wtool 生成的汇总文件：各项目的 env 块按优先级拼在这里 |
 | `~/.local/state/wtool/` | 状态：谁装过、软链登记、每个项目的操作记录 |
 | `~/.zshrc` / `~/.bashrc` | 只有**一段** loader 块（注释标出边界），负责 source 上面那个汇总文件 |
@@ -238,7 +238,7 @@ wtool install terminal/tmux --no-script  # 只做通用机制，不跑项目的 
 2. 按 `wtool.xml` 建软链接、写 shell 托管块
 3. 如果项目有 `install.sh`，跑它
 
-第 3 步放在最后，是因为这时候 `~/.wtool/links/<项目 ID>` 已经建好了，脚本可以直接引用这个稳定地址，而不用关心仓库实际在哪。
+第 3 步放在最后，是因为这时候 `~/.wtool/wtool-work-dir/links/<项目 ID>` 已经建好了，脚本可以直接引用这个稳定地址，而不用关心仓库实际在哪。
 
 **这个命令可以在任何机器上跑，跑一百遍结果都一样。**
 
