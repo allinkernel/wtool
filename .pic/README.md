@@ -25,8 +25,8 @@ Typora 能看 PNG，harness 右边栏那个 markdown 预览器两者都不认（
 
 | 图 | 用在哪 | 画什么 |
 |---|---|---|
-| `layers.png` | README §1.4 | 三层路径：`release/` → `~/.wtool/` → `$HOME`，命令标在箭头上 |
-| `commands.png` | README §1.3 | 每条命令与 `release/`、`publish/` 的关系（一条闭环） |
+| `layers.png` | README §1.4 | 三层路径：`output/` → `~/.wtool/` → `$HOME`，命令标在箭头上 |
+| `commands.png` | README §1.3 | 每条命令与 `output/`、`release/` 的关系（一条闭环） |
 
 改图就改 `.mmd`，然后：
 
