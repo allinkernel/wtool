@@ -233,6 +233,12 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 ou
 
 拒绝时 `wtool build` 的退出码**不是 0** —— 什么也没干却报成功，最容易骗过自动化的调用方。
 
+**要容器的那种项目，容器是 `wtool` 起的**：项目只写"哪个发行版用哪个基础镜像"和
+"每一层装什么"，起容器、提交镜像、把每一层导出成安装产物都由引擎做。好处是
+**可以断点续跑** —— 重跑 `wtool build` 不会重编已经编好的层，连 docker 里的镜像被清掉了
+也能从项目自己的 `layer/` 目录装回来。只想编一个发行版就加 `--target=ubuntu_22.04`，
+只想看它打算干什么就加 `--dry-run`。
+
 `download-release` 只做一件事：照项目里**提交在仓库里**的 `scripts/release.json`
 把该下的文件下到 `release/`，逐个校验校验值；已经下好的（校验值对得上）会跳过，
 所以中断了重跑不会重下。`unpack-release` 再照包自带的 `dist.json` 校验每一卷、
