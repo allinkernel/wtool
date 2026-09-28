@@ -73,26 +73,27 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 `wtool` 把这件事拆成三个阶段，每个阶段的输入输出都不重叠：
 
 ```
-  ① 产出 ── 需要网络；build 还需要编译器
-  ┌────────────────────────────────────────────────┐
-  │  wtool build       自己编                       │
-  │  wtool download    下别人编好的（两者等价）      │
-  └───────────────────────┬────────────────────────┘
-                          │ 写
-                          ▼
-  ┌────────────────────────────────────────────────┐
-  │  项目的 output/ 目录 —— 产物的中转站             │
-  │  （不进 Git，可以整个拷到别的机器）               │
-  └───────────────────────┬────────────────────────┘
-                          │ 读（install 是唯一的读者）
-                          ▼
+  ① 产出 ── 需要网络；自己编还需要编译器
+  ┌───────────────────────────┬──────────────────────────────────┐
+  │ wtool build             自己编（编什么由项目说了算）         │
+  │ wtool download-release  从发布页把包下到项目的 release/      │
+  │ wtool unpack-release    校验 + 解开，写进 output/            │
+  │ （后两条连起来 = 下别人编好的，结果和 build 一样）           │
+  └───────────────────────────┬──────────────────────────────────┘
+                             │ 写
+                             ▼
+  ┌──────────────────────────────────────────────────────────────┐
+  │ output/ —— 产物的中转站                                      │
+  │ （不进 Git，可以整个目录拷到别的机器）                       │
+  └───────────────────────────┬──────────────────────────────────┘
+                             │ 读（install 是唯一的读者）
+                             ▼
   ② 铺设 / ③ 打包发布
-  ┌────────────────────────────────────────────────┐
-  │  wtool install        铺进 ~/.wtool ← 断网也能跑 │
-  │  wtool pack-release   打包 → 项目的 release/     │
-  │  wtool unpack-release 校验 + 解包                │
-  │  wtool publish        打包 + 上传 ← 需要网络     │
-  └────────────────────────────────────────────────┘
+  ┌──────────────────────────────────────────────────────────────┐
+  │ wtool install          铺进 ~/.wtool ← 断网也能跑            │
+  │ wtool pack-release     output/ → release/（打成两个包）      │
+  │ wtool publish-release  release/ → 发布页 ← 需要网络          │
+  └──────────────────────────────────────────────────────────────┘
 ```
 
 一句话记住：**「编」和「下」产出同一个东西，装只认那个东西。**
@@ -113,7 +114,11 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | 命令 | 做什么 | 要 sudo 吗 | 碰网络吗 | 可撤吗 |
 |---|---|---|---|---|
 | `wtool build <路径>` | 自己编：编译源码、拉插件、装语言服务，结果写进项目的 `output/` | ❌ | ✅ | 删掉 `output/` 就没了 |
-| `wtool download <路径>` | 从发布页下别人编好的包，解开写进 `output/` 的**同一个位置** | ❌ | ✅ | 同上 |
+| `wtool download-release <路径>` | 从发布页**只下载**：把别人编好的包下进项目的 `release/`（逐个校验校验值） | ❌ | ✅ | 删掉 `release/` 就没了 |
+| `wtool unpack-release <路径>` | 把 `release/` 里下好的包**校验 + 解开**，写进 `output/` 的对应位置 | ❌ | ❌ | 同上 |
+
+> 「下载」和「解开」是两条命令，可以分开跑：下载中断了重跑会跳过已下好的（校验值对得上就不重下），
+> 解开失败也不会留下半个 `output/`。「自己编」和「下载 + 解开」产出**完全相同的东西**。
 
 **安装到系统**
 
@@ -129,8 +134,8 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | 命令 | 做什么 | 要 sudo 吗 | 碰网络吗 | 可撤吗 |
 |---|---|---|---|---|
 | `wtool pack-release <路径>` | 打成**两个包**（源码包 + 产物包）写进项目的 `release/`，各带一个校验文件 | ❌ | ❌ | 删掉 `release/` 就没了 |
-| `wtool unpack-release <路径>` | 校验 + 解包发布包（大项目是分卷的），解到 `output/` | ❌ | ❌ | 同上 |
-| `wtool publish [<路径>]` | `pack-release` + 上传到项目自己的 GitHub Release 页 | ❌ | ✅ | 已经被人下载走的收不回来 |
+| `wtool unpack-release <路径>` | 在另一台机器上把包**校验 + 解开**（大项目是分卷的），解到 `output/` | ❌ | ❌ | 同上 |
+| `wtool publish-release [<路径>]` | **只上传**：把 `release/` 里的东西传到项目自己的 GitHub Release 页，然后写下"这一版有什么"的下载声明 | ❌ | ✅ | 已经被人下载走的收不回来 |
 
 **批量**
 
@@ -163,14 +168,14 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | `wtool init <目录>` | 新建一个 wtool 项目 |
 | `wtool version` | 打印版本 |
 
-**会动手的那些命令**（`build` / `download` / `install` / `uninstall` / `sudo-install` /
-`sudo-uninstall` / `pack-release` / `unpack-release` / `publish` / `bootstrap` /
+**会动手的那些命令**（`build` / `download-release` / `unpack-release` / `install` / `uninstall` /
+`sudo-install` / `sudo-uninstall` / `pack-release` / `publish-release` / `bootstrap` /
 `sudo-bootstrap` / `repair`）都支持 `--dry-run`：先打印计划、不真的动系统。
 
 **"永不要 sudo、永不联网"不是口号，它是可逆性的实现方式。** 只要 `install`
 不产生任何新的外部依赖，"撤销"就是把铺出去的东西删掉这么简单。
 一旦它偷偷开始下载或编译，撤销就成了一句空话——所以需要网络和编译器的活
-全在 `build` / `download` 里，需要 root 的活全在 `sudo-*` 里。
+全在 `build` / `download-release` 里，需要 root 的活全在 `sudo-*` 里。
 
 > apt 装的系统包**没有记账**，所以严格来说撤不回来。
 > `sudo-uninstall` 能做的：把装的包卸掉、把改过的 `/etc` 文件从备份还原回去。
@@ -180,29 +185,30 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 ### 1.3 `output/` 和 `release/` 是什么
 
 **`output/`（产物目录）**：每个需要产出的项目，在自己目录下都有一个 `output/` 目录，
-它是**构建产物的唯一落脚点**。**`release/`（打包目录）** 就在它旁边，
-装的是 `pack-release` 打出来的发布包。
+它是**产物的唯一落脚点**。**`release/`（包的中转站）** 就在它旁边：
+`pack-release` 打好的包放在这儿，从发布页下载的包也下到这儿。
 
 ```
 <项目>/
 ├── wtool.xml            项目声明
-├── scripts/             这个项目专属的动作脚本
-│   ├── build.sh / download.sh / install.sh
-│   ├── downloads.sh     ← publish 生成的下载清单（§1.3），是生成物但要进 Git
-│   └── publish.sh
+├── scripts/             这个项目专属的动作脚本，只有两种
+│   ├── build.sh         自己编：产物写进 output/
+│   ├── install.sh       通用机制铺不了的安装步骤
+│   └── release.json     "这一版发布了什么"的下载声明（发布后生成，要进 Git）
 ├── docs/
-│   └── download.md      ← publish 生成的下载页，README 里指向它
-├── output/              ← build 或 download 的产物，不进 Git
+│   └── download.md      给人看的下载页，README 里指向它（打包时生成，要进 Git）
+├── output/              ← build 或 unpack-release 的产物，不进 Git
 │   └── ubuntu_22/       按"系统_版本"分目录
 │       ├── main/        底座：主程序 + 基础配置
 │       └── lang/        语言增量包，依赖 main
 │           └── cpp/ python/ java/ rust/ go/ lua/
-└── release/             ← pack-release 的产物，不进 Git
+└── release/             ← 包的中转站，不进 Git
     ├── xxx-源码.zip     整个项目（不含 output/ 和 release/）
     ├── xxx-源码-hash.txt
     ├── xxx-release.zip  产物包：output/ 里的东西（大项目切成 -vol01、-vol02…）
     ├── xxx-release-hash.txt
-    └── dist.json        分卷清单：每一卷叫什么、多大、校验值是多少
+    ├── dist.json        这一份怎么拼：每一卷叫什么、多大、校验值是多少
+    └── .source          内部标记：这份包是"刚打的"还是"刚下的"
 ```
 
 **`output/` 的四条规则**：
@@ -210,7 +216,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | 规则 | 为什么 |
 |---|---|
 | **`output/` 不进 Git** | 它是机器特定的二进制产物，跟着仓库走只会把仓库撑爆 |
-| **`build` 和 `download` 写到完全相同的路径** | 这是两条路等价的**唯一**实现方式 |
+| **自己编、和下载解开，写到完全相同的路径** | 这是两条路等价的**唯一**实现方式 |
 | **`install` 只读它，不写它** | 产物层和安装层分开，重装不用重建 |
 | **整个目录可以搬走** | 拷到另一台机器 + `wtool install`，环境就复现了 |
 
@@ -232,67 +238,49 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 产物包会切成若干分卷，放在项目的 `release/` 里，旁边配一份 `dist.json` 说明每一卷叫什么、
 多大、校验值是多少——`wtool unpack-release` 照着它校验和拼接，不需要人记顺序。
 
-**这三个动作拼起来是一条闭环**，而且可以当成一条断言来验：
+**这几个动作拼起来是一条闭环**，而且可以当成一条断言来验：
 
 ```
-pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   repo sync 之后 download 一遍
+pack-release → unpack-release   ≡   repo sync 之后 build 一遍   ≡   repo sync 之后 download-release + unpack-release
 ```
 
 **每条命令跟这两个目录的关系**（图源 `.pic/commands.mmd`）：
 
 ![命令与 output/、release/ 的关系](.pic/commands.png)
 
-一句话读法：**只有 `build` / `download` 往 `output/` 里写，只有 `pack-release` 往 `release/` 里写；
-`install` 只读 `output/`，`publish` 只读 `release/`。** 中间那两个虚线箭头是"绕一圈回来"：
-发布出去的东西，在另一台机器上又变回 `output/`。
+一句话读法：**只有 `build` 和 `unpack-release` 往 `output/` 里写；
+`pack-release` 往 `release/` 里写，`download-release` 把包下进 `release/`；
+`install` 只读 `output/`，`publish-release` 只读 `release/`。**
 
-#### `publish` 干三件事，第三件不能省
+#### 发布和使用，各走一遍
 
-发布不是"传上去就完了"。`publish.sh` 的契约是**三件事**：
+**发布方**（有源码、编得出来的那台机器）：
 
-| # | 做什么 | 产出 |
-|---|---|---|
-| 1 | 上传：把 `release/` 里的东西推到 GitHub Release | 线上多一个 tag，底下挂着一堆资产 |
-| 2 | **写下载清单** | `scripts/downloads.sh` —— `download.sh` 会 source 它，照着里面的命令下 |
-| 3 | **写下载页** | `docs/download.md` —— 给人看的：这一版是什么、直链在哪、要敲哪条命令 |
-
-项目自己的 `README.md` 里留一行链接指到 `docs/download.md` 就行，
-不用把一长串文件名的链接抄在 README 正文里 —— 那些是**每次发布会变**的东西。
-
-**为什么 `publish` 能提前写出这两个文件？** 因为发布地址是**拼出来的**，不是传完才知道：
-
-```
-https://github.com/<owner>/<repo>/releases/download/<tag>/<文件名>
+```bash
+wtool build editor/astronvim_v5             # 源码 → output/
+wtool pack-release editor/astronvim_v5      # output/ → release/（打成包）
+wtool publish-release editor/astronvim_v5   # release/ → GitHub Release（**只上传**）
 ```
 
-`publish.sh` 在推之前就知道 `<owner>/<repo>`、`<tag>` 和每个文件的名字，
-所以它能先把这三个文件写好再去传，传完回头核对大小和 sha256。
+`publish-release` 传完之后写一份 `scripts/release.json`：这一版发了什么、
+每个文件多大、校验值是多少。**这份文件是文本，要提交进仓库** ——
+它就是下一台机器"该下哪些文件"的唯一依据。
 
-**两个生成物长什么样**：
+**使用方**（只想用、不想编的那台机器）：
 
-```sh
-# scripts/downloads.sh —— 由 publish.sh 生成，别手改
-# download.sh 先定义好 wt_dl_add，再 source 这个文件，里面的命令就一条条跑起来
-WTOOL_DL_TAG='snapshot-2026-09-20-ubuntu-20.04'
-WTOOL_DL_BASE='https://github.com/allinkernel/wtool-astronvim_v5/releases/download/snapshot-2026-09-20-ubuntu-20.04'
-wt_dl_add 'dist.json'                                 '<sha256>'
-wt_dl_add 'astronvim_v5-release-ubuntu20.04-vol01'    '<sha256>'
-wt_dl_add 'astronvim_v5-release-ubuntu20.04-vol02'    '<sha256>'
+```bash
+wtool download-release editor/astronvim_v5  # 读提交在项目里的下载声明 → 包下到 release/
+wtool unpack-release   editor/astronvim_v5  # 校验 + 解开 → output/
+wtool install editor/astronvim_v5           # 装
 ```
 
-```
-docs/download.md     这一版发了什么、怎么下、下完敲哪条命令（人读，也是 README 指过去的那一页）
-```
+**为什么下载声明要提交进仓库？** 一是刚 `repo sync` 下来就知道"这个项目有没有现成的包"，
+不用先联网去问发布页；二是**校验值的可信来源**：校验值只能证明"我下到的文件没坏、
+和清单里写的一致"，**不能证明"这是作者发的"** —— 发布页和清单一起被换掉是防不住的。
+清单放在仓库里（要改就得改提交历史，看得见）才挡住了这一层。
+再往上（有人连你的 GitHub 账号一起换掉）今天**没有**防 —— 那要靠签名，现在没做。
 
-**为什么单独一个清单文件，而不是让 `publish` 覆写整个 `download.sh`？**
-因为 `download.sh` 里除了"下哪些文件"，还有一堆跟本次发布无关的策略 ——
-并发几路、断线怎么续、走不走代理、`.todo.tsv` 队列怎么排。
-那些不该被一次发布改写。清单只描述**这次发了什么**，策略留在脚本里。
-
-> 这两个文件**是文本，要提交进仓库** —— 不然别人 `repo sync` 下来，
-> `download.sh` 不知道最新一版在哪。
-> `publish` 跑完会把该提交的东西打出来提醒你，但**不替你 commit**：
-> 这个仓库的改动都要过检视闸门（§3.4）。
+`publish-release` 跑完会把该提交的东西打出来提醒你，但**不替你 commit**。
 
 ### 1.4 装的东西放在哪：三层
 
@@ -342,38 +330,44 @@ docs/download.md     这一版发了什么、怎么下、下完敲哪条命令�
 `wtool.xml` 用几行 XML 说清楚"我有哪些文件要被 shell 加载""哪些文件要软链到哪里"。
 剩下的——建链接、写 shell 块、保证顺序、记录状态、支持卸载——全部由 `wtool` 负责。
 
-只有通用机制表达不了的事情，项目才需要额外提供一个脚本，都放在项目自己的 `scripts/` 下：
+只有通用机制表达不了的事情，项目才需要额外提供一个脚本，都放在项目自己的 `scripts/` 下。
+**只有两种**：
 
 | 脚本 | 什么时候需要 | 对应的命令 |
 |---|---|---|
 | `build.sh` | 这个项目要自己编（比如从源码编一个编辑器） | `wtool build <项目>` |
-| `download.sh` | 这个项目可以从发布页下别人编好的包，省掉编译 | `wtool download <项目>` |
 | `install.sh` | 装它需要通用机制做不到的步骤 | `wtool install <项目目录>` |
-| `publish.sh` | 打成两个包还不够、需要额外处理时才要（很少见） | `wtool publish <项目>` |
 
-**这些脚本在不在，就代表这个项目有没有这几项能力**（`install` 还有一条来源：`wtool.xml` 里声明了 `link` 或 `zshrc`/`bashrc` 也算有）。`wtool` 不带参数跑一下，会看到一张表，哪一格写着「可执行」或「已完成」，就说明这个项目能做这件事：
+下载别人的包、打包上传**都不用写脚本**：那是引擎自带的命令
+（`download-release` / `unpack-release` / `pack-release` / `publish-release`），
+所有项目走同一条路。
+
+**这些脚本在不在，就代表这个项目有没有这几项能力**（`install` 还有一条来源：`wtool.xml` 里声明了 `link` 或 `zshrc`/`bashrc` 也算有）。`wtool` 不带参数跑一下，会看到一张表：
 
 ```
-┌──────────────────────┬──────┬────────────┬────────────┬────────────┬────────────┐
-│ 项目                 │ prio │ build      │ download   │ install    │ publish    │
-├──────────────────────┼──────┼────────────┼────────────┼────────────┼────────────┤
-│ bootstrap            │ 5    │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ os/ubuntu            │ 5    │ 不支持     │ 不支持     │ 不支持     │ 可执行     │
-│ shell/oh-my-zsh      │ 10   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ shell/zsh            │ 20   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ tools/repo           │ 40   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ tools/android_repack │ 45   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ tools/gerrit-gate    │ 46   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ tools/dsh-remote     │ 47   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ harness/dsh-conf     │ 48   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ terminal/tmux        │ 50   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ terminal/fzf         │ 60   │ 不支持     │ 不支持     │ 可执行     │ 可执行     │
-│ editor/astronvim_v5  │ 70   │ 可执行     │ 可执行     │ 待构建下载 │ 待构建下载 │
-└──────────────────────┴──────┴────────────┴────────────┴────────────┴────────────┘
+┌──────────────────────┬──────┬────────┬─────────┐
+│ 项目                 │ prio │ build  │ install │
+├──────────────────────┼──────┼────────┼─────────┤
+│ bootstrap            │ 5    │ 不支持 │ 可执行  │
+│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │
+│ shell/oh-my-zsh      │ 10   │ 不支持 │ 可执行  │
+│ shell/zsh            │ 20   │ 不支持 │ 可执行  │
+│ tools/repo           │ 40   │ 不支持 │ 可执行  │
+│ tools/android_repack │ 45   │ 不支持 │ 可执行  │
+│ tools/gerrit-gate    │ 46   │ 不支持 │ 可执行  │
+│ harness/dsh-conf     │ 48   │ 不支持 │ 可执行  │
+│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │
+│ terminal/fzf         │ 60   │ 不支持 │ 可执行  │
+│ editor/astronvim_v5  │ 70   │ 可执行 │ 待产出  │
+│ lightmind            │ 100  │ 不支持 │ 不支持  │
+└──────────────────────┴──────┴────────┴─────────┘
 ```
 
 （这是在一台**什么都没装过**的机器上跑出来的样子，所以状态列大多是"可执行"。
 你自己的机器上装过的项目会显示"已完成"。）
+
+**只有 `build` 和 `install` 两列**：发布和下载是全项目一样的引擎命令，不是某个项目的能力，
+所以表格里没有它们。
 
 `prio`（优先级）越小越先加载，决定环境变量块的顺序 —— 引擎要在最前面，所以是 5。
 
@@ -383,18 +377,19 @@ docs/download.md     这一版发了什么、怎么下、下完敲哪条命令�
 |---|---|---|
 | **不支持** | 红 | 这个项目没这项能力（比如纯配置项目不能 build） |
 | **可执行** | 黄 | 现在就能跑 |
-| **待构建下载** | 蓝 | 能力有，但得先 `build` 或 `download` |
+| **待产出** | 蓝 | 能力有，但 `output/` 里还是空的 —— 先 `wtool build`，或者 `download-release` + `unpack-release` |
 | **已完成** | 绿 | 跑过了 |
 
-`install` 和 `publish` 显示的是**你这台机器上的进度**，所以它会变：装过一个项目就从黄变绿，换台机器或者卸掉它又变回黄。
+`install` 那一列显示的是**你这台机器上的进度**，所以它会变：装过一个项目就从黄变绿，
+换台机器或者卸掉它又变回黄。（`build` 那列同理：编过一次就变绿。）
 
-**这四列是一条流水线，后面的依赖前面的：**
+**这是一条流水线**：
 
 ```
-build 或 download  →  install  →  publish
+产出（build，或者 download-release + unpack-release）  →  install
 ```
 
-前置没做时 `install` / `publish` 会**直接报错告诉你去跑哪条**，不会替你跑 ——
+前置没做时 `install` 会**直接报错告诉你去跑哪条**，不会替你跑 ——
 因为「自己编」和「下载别人编好的」是两个不该由工具替你做的决定。
 
 【图片占位】![wtool 能力总览](.pic/table.png)
@@ -413,8 +408,8 @@ build 或 download  →  install  →  publish
 | 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/wtool-work-dir/links/`（最后这个违反了"影子家目录里只放家目录里有的路径"，要收进来） |
 | `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（`release/` 里放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
 | 执行顺序：先跑项目的 `install.sh`，再铺 `$HOME` 软链 | 🚧 今天是反的（先铺软链再跑脚本） |
-| `build` / `download` 写进项目的 `output/` 再给 `install` 读 | 🚧 还没改，目前产物直接落在 `~/.wtool/usr` |
-| `pack-release` / `unpack-release` / `publish` 分成三条 | 🚧 打包和上传还是一条命令，也没有 `unpack-release` |
+| `build` 产出写进项目的 `output/` 再给 `install` 读 | ✅ 已实现：`build` 写 `output/`、`install` 只读 `output/`（下载那条路是 `download-release` + `unpack-release`，也落到同一个 `output/`） |
+| `pack-release` / `publish-release` / `download-release` / `unpack-release` 各一条 | ✅ 已实现：发布/下载是引擎的四条命令，项目侧不用写脚本 |
 | `sudo-install` / `sudo-uninstall` / `sudo-bootstrap` | 🚧 今天叫 `provision`，没有批量那条 |
 | `check` / `repair` / `kill-self-forever` | 🚧 还没有 |
 | `wtool status` 含软链检查、`wtool doctor` 含环境变量 | 🚧 今天 `list` 和 `env` 还是单独两条命令 |
@@ -430,8 +425,8 @@ build 或 download  →  install  →  publish
 | `wtool`（裸跑） | `wtool table` 也行 |
 | —— | `wtool scaffold` 已改名叫 `wtool init` |
 
-对使用者来说，差别只有一个：**今天换机器还是得重编或重下**，
-等 `output/` 那层落地之后，产物目录可以整个拷过去。
+对使用者来说，差别只有一个：**换机器不用重编** —— 要么 `wtool build` 一遍，
+要么 `download-release` + `unpack-release` 把别人编好的包取回来，两条路的结果一样。
 
 ### 1.7 现在有哪些项目
 
@@ -476,7 +471,7 @@ build 或 download  →  install  →  publish
 每个项目的最新版本都在它自己的 Release 页面里，包已经按正确目录结构打好，**全部下载、解开，得到的就是一个完整的工作区**。
 
 <!-- >>> wtool:downloads >>> -->
-<!-- 这一块由 `wtool publish` 自动重写，不要手改。 -->
+<!-- 这一块由 `wtool publish-release` 自动重写，不要手改。 -->
 
 每个项目的最新发布包都在它自己的 release 页面上。
 全部下载并解开之后，你会得到一个完整的工作区目录。
@@ -581,6 +576,8 @@ wtool-install:   README.md -> wtool-base/README.md
 还有产物包（大项目是若干分卷，配一个 `dist.json`）。把这些下到项目的 `release/` 目录下，
 用 `wtool unpack-release <项目目录>` 校验并解开，再 `wtool install <项目目录>` 收尾。
 `unpack-release` 只认 `dist.json`，不需要你记分卷的顺序。
+（如果这台机器上已经有 `wtool` 了，这一步可以交给 `wtool download-release <项目>`
+自动下 —— 它照项目里提交的 `scripts/release.json` 把该下的文件都下到 `release/`。）
 
 ---
 
@@ -590,8 +587,9 @@ wtool-install:   README.md -> wtool-base/README.md
 
 不过有几条命令要你告诉它**项目在哪**：`install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `validate` / `status` 认的是**项目目录**——在工作区根目录下写
-`terminal/tmux` 就行，在别的地方要写全路径。`build` / `download` / `publish` 宽松些，
-直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）也可以，在哪跑都认。
+`terminal/tmux` 就行，在别的地方要写全路径。`build` / `download-release` / `unpack-release` /
+`publish-release` 宽松些，直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）也可以，
+在哪跑都认。
 
 ### 3.1 看总览
 
@@ -646,7 +644,7 @@ wtool bootstrap          # 用户层：文件、软链、shell 集成。不需�
      截图建议包含开始几行和结束几行，能看出"按项目逐个处理"的结构。
 -->
 
-### 3.3 构建和下载
+### 3.3 产出：自己编，或者下现成的
 
 有些项目要产出东西才能用——要么自己编，要么直接下别人编好的（比如那套 Neovim 环境）：
 
@@ -654,18 +652,21 @@ wtool bootstrap          # 用户层：文件、软链、shell 集成。不需�
 wtool build                      # 列出哪些项目可以构建
 wtool build editor/astronvim_v5  # 自己编（小时级）
 
-wtool download                   # 列出哪些项目能下现成的包
-wtool download editor/astronvim_v5   # 从发布页拿（分钟级）
+wtool download-release                    # 列出哪些项目有现成的包可下
+wtool download-release editor/astronvim_v5  # 从发布页下到 release/（分钟级，只下载）
+wtool unpack-release editor/astronvim_v5    # 校验 + 解开，写进 output/
 ```
 
-**这两条路二选一，结果完全等价。** 两条路都写进项目的 `output/` 目录、放在同一个位置，
+**两条路二选一，结果完全等价。** 两条路都产出到项目的 `output/` 目录、放在同一个位置，
 所以之后的 `wtool install` 根本不关心它是从哪来的。能下就下。
 
-这一步可以反复跑，中断了重来也不会坏——最坏只是白花一次时间。纯配置类的项目没有这一步。
+「下载」和「解开」是两条命令、各干一件事：`download-release` 只把包下到 `release/`，
+`unpack-release` 才校验分卷、按顺序拼起来、解到 `output/`。中断了重来也不会坏 ——
+已经下好的文件（校验值对得上）会跳过，不会重下几百兆。纯配置类的项目没有这一步。
 
 ### 3.4 打包与发布
 
-**打包**（不联网，产物落在项目自己的 `release/` 目录里）：
+**打包**（不联网，产出落在项目自己的 `release/` 目录里）：
 
 ```bash
 wtool pack-release editor/astronvim_v5
@@ -673,6 +674,7 @@ wtool pack-release editor/astronvim_v5
 
 出来的是一对包——**源码包**（整个项目）和**产物包**（`output/` 里的东西），
 各配一个校验文件。大项目的产物包会切成若干分卷，外加一份 `dist.json` 说明每一卷。
+同时写一份给人看的下载页 `docs/download.md`（提交进仓库，README 里指向它）。
 
 **解包**（在另一台机器上，或者你想验一遍包是好的）：
 
@@ -683,15 +685,19 @@ wtool unpack-release editor/astronvim_v5
 它照 `dist.json` 校验每一卷的校验值、按正确顺序拼起来、解到 `output/`，然后你就能
 `wtool install` 了。**装到别的机器上时只需要产物包**，不需要源码包。
 
-**发布**（打包 + 上传到项目自己的 GitHub Release 页）：
+**上传**（把 `release/` 里的东西传到项目自己的 GitHub Release 页）：
 
 ```bash
-wtool publish                    # 发布所有项目
-wtool publish terminal/tmux      # 只发一个
-wtool publish --dry-run          # 先看计划
+wtool publish-release                 # 所有可发布的项目
+wtool publish-release terminal/tmux   # 只发一个
+wtool publish-release --dry-run       # 先看计划
 ```
 
-发布完成后，本文档第 2 节的下载链接会自动更新成最新的 —— 那一段是 `wtool publish` 重写的，不用手动维护。
+它**只上传、不打包**（要发新版本就先 `pack-release`），传完之后写一份
+`scripts/release.json`：这一版发了什么、每个文件的校验值是多少 ——
+**记得把它提交进仓库**，那是别人 `download-release` 时的依据。
+
+发布完成后，本文档第 2 节的下载链接会自动更新成最新的 —— 那一段是发布时重写的，不用手动维护。
 
 ### 3.5 卸载：三条命令，别用 `rm -rf`
 
@@ -736,8 +742,8 @@ wtool init <目录> [--id ID] [--priority N] [--all]   # 新建一个 wtool 项�
 wtool version
 ```
 
-`build` / `download` / `install` / `uninstall` / `sudo-install` / `sudo-uninstall` /
-`pack-release` / `unpack-release` / `publish` / `bootstrap` / `sudo-bootstrap` / `repair`
+`build` / `download-release` / `unpack-release` / `install` / `uninstall` / `sudo-install` /
+`sudo-uninstall` / `pack-release` / `publish-release` / `bootstrap` / `sudo-bootstrap` / `repair`
 都支持 `--dry-run`：先打印计划、不真的动系统。
 `status` / `doctor` / `validate` 这些只看不动的没有这个开关。
 
@@ -803,23 +809,28 @@ docker run --rm -it --network=host \
 
 ### 4.4 每个项目自己的 `scripts/`
 
-项目目录下的 `scripts/` 是**这个项目专属**的动作。有没有某个文件本身
-就是一种声明——有 `build.sh` 才叫"能构建"：
+项目目录下的 `scripts/` 是**这个项目专属**的动作，**只有两种**。
+有没有某个文件本身就是一种声明——有 `build.sh` 才叫"能构建"：
 
 | 文件 | 什么时候跑 | 干什么 |
 |---|---|---|
 | `build.sh` | `wtool build <项目>` | 自己编，**产物写进项目的 `output/`** |
-| `download.sh` | `wtool download <项目>` | 从发布页拿别人编好的包，**放到 `output/` 里完全相同的位置**。下哪些文件由 `scripts/downloads.sh`（`publish` 生成的清单）说了算 |
 | `install.sh` | `wtool install <项目目录>` | 把 `output/` 铺进 `~/.wtool/usr`；🚧 **不建 `$HOME` 软链、不写 rc**（那是引擎按 `wtool.xml` 干的 —— 今天项目脚本还自己建） |
 | `install.sh --uninstall` | `wtool uninstall <项目目录>` | 撤销上面做的 |
-| `publish.sh` | `wtool publish <项目>` | 上传 + 顺手写 `scripts/downloads.sh` 和 `docs/download.md`（§1.3）。只有需要产物的项目才有它 |
-| `extract.sh` | 手动（只有浏览器、连 wtool 都还没装的机器） | 校验并解开分卷到 `output/`，**不装**（新架构里这活已经归引擎的 `wtool unpack-release`） |
 
-**`publish.sh` 生成的那两个文件不是"顺便"，是契约的一部分**：
-`download.sh` 靠 `scripts/downloads.sh` 知道该下什么，人靠 `docs/download.md` 知道该点哪。
-项目 `README.md` 里只留一行指向 `docs/download.md`。
+**下载、打包、上传都不用项目写脚本**：`wtool download-release` / `unpack-release`
+（取现成的包）和 `wtool pack-release` / `publish-release`（打包上传）是引擎自带的命令，
+每个项目走的都是同一条路。老项目里的 `download.sh` / `publish.sh` / `extract.sh`
+已经退休，看到它们可以当历史遗留。
 
-**`build` 和 `download` 是二选一的两条路，结果等价。** 编一次几十分钟到
+另外两个**生成物**（不是脚本，是文本，要提交进仓库）：
+
+| 文件 | 谁写 | 干什么 |
+|---|---|---|
+| `scripts/release.json` | `wtool publish-release`（上传成功后） | "这一版发布了什么"：每个文件的名字、大小、校验值。`download-release` 照它下 |
+| `docs/download.md` | `wtool pack-release` | 给人看的下载页；项目 `README.md` 里留一行指过来就行 |
+
+**「自己编」和「下载 + 解开」是二选一的两条路，结果等价。** 编一次几十分钟到
 几小时，下载几分钟——能下载就下载。两条路把产物放进同一个 `output/` 目录，
 所以之后的 `wtool install` 完全不关心它是编出来的还是下下来的。
 
