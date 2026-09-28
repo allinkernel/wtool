@@ -216,7 +216,22 @@ wtool download-release editor/astronvim_v5   # 下到项目的 release/（只下
 wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 output/
 ```
 
-`build` 只做一件事：找到项目的 `build.sh` 然后跑它。`wtool` 不对"构建"做任何假设——编什么、要不要起容器，全由脚本决定，但**产物要落在项目的 `output/` 里**。
+`build` 只做一件事：找到项目的 `build.sh` 然后跑它 —— 编什么全由脚本决定，
+**产物要落在项目的 `output/` 里**。
+
+不过"要不要起容器"这件事是**声明**的，不是脚本里偷偷判断的：项目在 `wtool.xml` 里写
+`<build kind="docker"/>`（每个发行版一个容器分层编）或 `<build kind="local"/>`
+（本地直接编，默认）。好处是 `wtool` 能在**动手之前**告诉你这台机器行不行：
+
+- 项目声明要容器，而这台机器上**没有 docker** → `wtool build` 直接拒绝
+  （脚本一行都不跑），并给你三条命令：`download-release` → `unpack-release` → `install`。
+  这正是"机器太弱就下现成的包"那条路 —— 不用你自己先判断。
+- 项目声明了机器门槛（几个核、多少内存、多少磁盘），不够也一样拒绝；
+  确定要硬上就加 `--force`（**没有 docker 是 `--force` 也编不了的**）。
+- 同一个 `<build kind>` 还决定 `output/` 里有没有"每个发行版一格"那一层，
+  所以同一个项目的两种装法（自己编 / 下现成的）产出的目录形状一定对得上。
+
+拒绝时 `wtool build` 的退出码**不是 0** —— 什么也没干却报成功，最容易骗过自动化的调用方。
 
 `download-release` 只做一件事：照项目里**提交在仓库里**的 `scripts/release.json`
 把该下的文件下到 `release/`，逐个校验校验值；已经下好的（校验值对得上）会跳过，
