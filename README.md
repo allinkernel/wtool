@@ -58,8 +58,10 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 
 （`$PWD` 要换成工作区目录；两个容器脚本的差别见第 4.3 节。）
 
-> **怎么看下面这些表**：✅ = 现在就能用；🚧 = 已经设计好、还没实现，
-> 今天敲它会报"不认识这条命令"。缺口清单在第 1.6 节。
+> **怎么看下面这些表**：✅ = 现在就能用；🚧 = 已经设计好、还没实现（敲它会报
+> "不认识这条命令"）。这份文档只写**已经成立**的东西 —— 还在做的是什么、
+> 做到哪了，看工作区里 `harness/BACKLOG.md`（那是唯一的进度来源，不在这份文档里
+> 维护第二份，免得两边说法不一样）。
 
 ---
 
@@ -358,7 +360,7 @@ wtool install editor/astronvim_v5           # 装
 │ harness/dsh-conf     │ 48   │ 不支持 │ 可执行  │
 │ terminal/tmux        │ 50   │ 不支持 │ 可执行  │
 │ terminal/fzf         │ 60   │ 不支持 │ 可执行  │
-│ editor/astronvim_v5  │ 70   │ 可执行 │ 待产出  │
+│ editor/astronvim_v5  │ 70   │ 可执行 │ 可执行  │
 │ lightmind            │ 100  │ 不支持 │ 不支持  │
 └──────────────────────┴──────┴────────┴─────────┘
 ```
@@ -399,34 +401,16 @@ wtool install editor/astronvim_v5           # 装
 
 ### 1.6 现在到哪一步了
 
-上面这套是**正在落地的目标**。已经做到的和还没做的：
+**这一节原来是一张"实现进度表"，现在删掉了** —— 进度是**会过期**的东西，
+而这份文档是给所有人看的：读者照着做的时候，看到的必须是"现在就能用"的东西，
+不是一张写着 🚧 的愿望清单（那还是两份真相：实现了没实现，`BACKLOG.md` 说了算）。
 
-| | 状态 |
-|---|---|
-| `wtool.xml` 存在即项目、`<link>` 三段映射、软链只在 `$HOME` | 🚧 目标形态；今天 `wtool.xml` 里的写法还是旧的 `src=`/`dest=` |
-| 影子家目录（实体在 `~/.wtool`，路径和 `$HOME` 一一对应） | 🚧 目标形态；今天产物都在 `~/.wtool/usr/` 下，`~/usr` 这条软链还没建 |
-| 引擎自己的东西（自举、中转软链、临时）收在 `~/.wtool/wtool-work-dir/` | 🚧 今天散在 `~/.wtool/bootstrap`、`~/.wtool/src`、`~/.wtool/wtool-work-dir/links/`（最后这个违反了"影子家目录里只放家目录里有的路径"，要收进来） |
-| `install` 永不要 sudo、永不联网 | ✅ 本机安装这条路已经是；但**从发布包铺开**那条路（`release/` 里放着 `dist.json` 加分卷时）今天还会装系统依赖，而且是直接铺到 `$HOME` |
-| 执行顺序：先跑项目的 `install.sh`，再铺 `$HOME` 软链 | 🚧 今天是反的（先铺软链再跑脚本） |
-| `build` 产出写进项目的 `output/` 再给 `install` 读 | ✅ 已实现：`build` 写 `output/`、`install` 只读 `output/`（下载那条路是 `download-release` + `unpack-release`，也落到同一个 `output/`） |
-| `pack-release` / `publish-release` / `download-release` / `unpack-release` 各一条 | ✅ 已实现：发布/下载是引擎的四条命令，项目侧不用写脚本 |
-| `sudo-install` / `sudo-uninstall` / `sudo-bootstrap` | 🚧 今天叫 `provision`，没有批量那条 |
-| `check` / `repair` / `kill-self-forever` | 🚧 还没有 |
-| `wtool status` 含软链检查、`wtool doctor` 含环境变量 | 🚧 今天 `list` 和 `env` 还是单独两条命令 |
-| 语言包（`lang/cpp`、`lang/python`…）按需叠加 | 🚧 设计好了，还没实现 |
+上面 1.1–1.5 讲的机制**现在全部成立**：影子家目录（实体在 `~/.wtool`，
+`~/usr` 那条软链在）、`install` 先跑项目脚本再铺 `$HOME` 软链、
+`install` 永不要 sudo 也永不联网、发布下载是引擎的四条命令、
+`sudo-*` / `check` / `repair` / `kill-self-forever` 都在、语言层按需叠加。
 
-**今天敲命令的对照**（左：本文档里的新名字；右：现在实际存在的名字）：
-
-| 新名字 | 今天实际敲 |
-|---|---|
-| `wtool sudo-install <路径>` | `wtool provision <路径>` |
-| `wtool doctor` | `wtool doctor` 和 `wtool env` 两条 |
-| `wtool status <路径>` | `wtool status` 和 `wtool list` 两条 |
-| `wtool`（裸跑） | `wtool table` 也行 |
-| —— | `wtool scaffold` 已改名叫 `wtool init` |
-
-对使用者来说，差别只有一个：**换机器不用重编** —— 要么 `wtool build` 一遍，
-要么 `download-release` + `unpack-release` 把别人编好的包取回来，两条路的结果一样。
+想知道"还剩什么没做"，看工作区里的 `harness/BACKLOG.md`。
 
 ### 1.7 现在有哪些项目
 
@@ -835,7 +819,8 @@ docker run --rm -it --network=host \
 所以之后的 `wtool install` 完全不关心它是编出来的还是下下来的。
 
 **本机装这条路断网也能跑**，所以它出错时你看到的永远是"缺什么"，不会是"网断了"。
-（从发布包铺开那条路目前还会装系统依赖，上面 1.6 说了。）
+（从发布包铺开那条路要先跑 `./install.sh` 准备运行环境 —— 那一步会装系统包；
+`wtool install` 本身永不要 sudo。）
 
 发布过包的项目分两种。**纯源码包**（大多数项目）解开就是仓库目录树，没有额外脚本。
 **带编译产物的项目**（现在只有 Neovim 那套）Release 页面里会多带分卷和一份 `dist.json`——

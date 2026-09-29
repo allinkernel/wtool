@@ -398,25 +398,37 @@ wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quie
 
 ## 3. 子项目
 
-| 项目 | 仓库 | 简介 |
+工作区分好几层，每层是一个**独立的仓库**（用 `repo` 工具统一管理）。
+下面是清单里登记的全部项目 —— 和 `.repo/manifests/default.xml` 一一对应：
+
+| 项目（工作区里的路径） | 仓库 | 简介 |
 |---|---|---|
 | `wtool-base` | [allinkernel/wtool](https://github.com/allinkernel/wtool) | 文档。你正在看的这份 |
-| `bootstrap` | [allinkernel/wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体 |
+| `bootstrap` | [allinkernel/wtool-bootstrap](https://github.com/allinkernel/wtool-bootstrap) | 引擎本体：`wtool` 这条命令、规划器、执行器 |
+| `harness` | [allinkernel/wtool-harness](https://github.com/allinkernel/wtool-harness) | 给 AI 助手看的项目记忆（架构书 / 决策记录 / 待办 / 历史流水） |
+| `harness/dsh-conf` | [allinkernel/wtool-dsh-conf](https://github.com/allinkernel/wtool-dsh-conf) | `~/.dsh` 里**声明式**的那部分（用户级规则、DSH 设置、钩子、自建 skills） |
 | `os/ubuntu` | [allinkernel/wtool-os-ubuntu](https://github.com/allinkernel/wtool-os-ubuntu) | Ubuntu 系统包与 apt 镜像 |
-| `shell/zsh` | [allinkernel/wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 配置 |
+| `editor/astronvim_v5` | [allinkernel/wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | Neovim 环境的构建与发布 |
+| `editor/astronvim_v5/astronvim_v5_config` | [allinkernel/wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 上面那套的具体配置 |
+| `editor/astronvim_v5/nvim` | [neovim/neovim](https://github.com/neovim/neovim) | 上游 Neovim 源码（**不是我们的项目**，只是钉在这个位置） |
 | `shell/oh-my-zsh` | [allinkernel/wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh) | oh-my-zsh 本体 |
+| `shell/zsh` | [allinkernel/wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 配置 |
 | `terminal/tmux` | [allinkernel/wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置与状态脚本 |
 | `terminal/fzf` | [allinkernel/wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 预编译二进制 |
 | `tools/repo` | [allinkernel/wtool-repo](https://github.com/allinkernel/wtool-repo) | repo 工具 |
 | `tools/android_repack` | [allinkernel/wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像解包 / 改包 / 重签 |
-| `editor/astronvim_v5` | [allinkernel/wtool-astronvim_v5](https://github.com/allinkernel/wtool-astronvim_v5) | Neovim 环境的构建与发布 |
-| `editor/astronvim_v5/astronvim_v5_config` | [allinkernel/wtool-astronvim_v5_config](https://github.com/allinkernel/wtool-astronvim_v5_config) | 上面那套的具体配置 |
-| `editor/astronvim_v5/nvim` | [neovim/neovim](https://github.com/neovim/neovim) | 上游 Neovim 源码（不是我们的项目） |
+| `tools/gerrit-gate` | [allinkernel/wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | docker 里跑一台 Gerrit 的检视闸门。**已废弃**（改成"改动只提交到 `ds_dev`、人来合"，见工作区 `harness/docs/adr/0019`），实物留着可恢复 |
+| `tools/dsh-remote` | [allinkernel/wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 手机远程接管家里的会话（阿里云 Caddy + SSH 反向隧道 + 通知） |
 | `themes/typora/lightmind` | [allinkernel/typora-LightMindTheme](https://github.com/allinkernel/typora-LightMindTheme) | Typora 主题 |
+
+> 清单里还有个 `groups="..."` 的字段（`base` / `zsh` / `vim` / `android` / `gerrit` /
+> `remote` / `themes`），可以只同步你要的那几组：`repo init -g all,-gerrit,-remote ...`。
 
 每个项目的详细说明（它装了什么、有哪些脚本、怎么改）由**项目自己**的 README 维护，点仓库名进去看。
 
-新增项目后，这份表不会自动更新——它是写在文档里的。要加一个项目，就在 `default.xml` 里登记它，然后把上面这张表补一行。
+**这张表是手写的**（工作区根目录跑 `wtool` 打出来的那张表是**自动算的**，两者角度不同：
+那张表看"这个项目有哪些能力"，这张表看"它对应哪个仓库"）。加一个项目要在
+`.repo/manifests/default.xml` 里登记，然后回来给这张表补一行。
 
 ---
 

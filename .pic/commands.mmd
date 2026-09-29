@@ -4,17 +4,18 @@ flowchart LR
     SRC["源码 + scripts/"]
     GH(["GitHub Release 发布页"])
     WT["~/.wtool/ → 你的 $HOME"]
-    GEN["scripts/downloads.sh<br/>docs/download.md"]
+    GEN["docs/download.md<br/>scripts/release.json"]
 
     subgraph PROJ["项目目录（两个都进 .gitignore）"]
         direction LR
-        REL["output/系统_版本/<br/>编译产物 + 下载产物"]
+        REL["output/系统_版本/<br/>构建产物（一层一个目录）"]
         PUB["release/<br/>分卷 + dist.json + hash"]
     end
 
     SRC -->|"wtool build"| REL
     REL -->|"wtool pack-release"| PUB
-    PUB -->|"wtool publish"| GH
-    GH -.->|"wtool download<br/>wtool unpack-release"| REL
+    PUB -->|"wtool publish-release"| GH
+    GH -.->|"wtool download-release"| PUB
+    PUB -.->|"wtool unpack-release"| REL
     REL -->|"wtool install"| WT
     PUB -.->|"顺手写"| GEN
