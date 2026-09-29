@@ -266,7 +266,13 @@ wtool install ./terminal/tmux
 wtool install terminal/tmux --dry-run
 wtool install terminal/tmux --force      # 目录有未提交改动也照装
 wtool install terminal/tmux --no-script  # 只做通用机制，不跑项目的 install.sh
+wtool install terminal/tmux --prune      # 顺手清掉"项目里已经删掉"的旧软链
 ```
+
+> `--prune` 是给"改过项目声明"的人用的：从 `wtool.xml` 里删掉一条 `<link>` 之后
+> 重新 `install`，那条旧软链默认**还留在原处**（wtool 不会去删没让它删的东西）。
+> 加 `--prune` 才会收走它 —— 只收 wtool 自己建过的那些，你自己建的软链、
+> 以及已经被别的项目接手的落点，它都不碰。平时不用带这个开关。
 
 `install` 要的是一个**项目目录**：在工作区根目录下写相对路径 `terminal/tmux`，
 在别的地方就写全路径。（`build` / `download-release` / `unpack-release` / `publish-release`
