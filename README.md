@@ -4,6 +4,9 @@
 
 这不是一个软件，是一套**管理方式**：所有配置以独立的小项目形式存在，各自放在自己的 Git 仓库里，由一个叫 `wtool` 的小引擎统一安装、构建、发布。
 
+> 这份文档讲**怎么用**；每条规则**为什么**这么定（软链、记账、三层产物、发布契约……）
+> 在 [`原理.md`](原理.md)；每条命令的参数和细节在 [`guide.md`](guide.md)。
+
 ---
 
 ## 0. 在一台新机器上，从这里开始
@@ -11,6 +14,15 @@
 **先装 `wtool` 自己，再让它去装项目。** 一共五步：
 
 ```bash
+# 0. 先有 git、python3，再拿到 repo 工具本身
+#    （很多发行版直接有包：sudo apt install repo；没有就用下面这个 —— repo 就是一个 Python 脚本）
+sudo apt install -y git python3 curl
+mkdir -p ~/.local/bin
+curl -fsSL -o ~/.local/bin/repo \
+  https://raw.githubusercontent.com/allinkernel/wtool-git-repo/wsw/repo
+chmod +x ~/.local/bin/repo
+export PATH="$HOME/.local/bin:$PATH"      # 想长期生效就写进 shell 配置
+
 # 1. 把仓库拿到本地（第一次）
 repo init -u ssh://git@github.com/allinkernel/w_manifests.git -b wtool
 repo sync
@@ -29,6 +41,10 @@ wtool sudo-bootstrap
 # 5. 装其余的项目：文件、软链、shell 集成。不需要 sudo，也不联网
 wtool bootstrap
 ```
+
+> **第 0 步为什么不能省**：`repo` 要用 `python3` 和 `git` 跑，而这两样正是第 2 步
+> `./install.sh` 负责准备的东西 —— 先有鸡才有蛋，所以这一步得你自己来（就三条命令）。
+> `repo` 官方也提供打包版本（Debian/Ubuntu 上是 `repo` 这个包），有就用系统的。
 
 **第 4 步和第 5 步为什么分开？** 因为**要 sudo 的事和不要 sudo 的事不能混在一格里**。
 第 4 步动的是整个系统（apt 包、`/etc` 下的文件），第 5 步动的只是你自己的家目录。
