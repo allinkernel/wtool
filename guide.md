@@ -163,7 +163,7 @@ wtool validate ./terminal/ripgrep
 | `wtool build [<项目>…]` | 跑项目的 `build.sh`，产物写进 `output/` |
 | `wtool download-release [<项目>…]` | 照项目里提交的 `scripts/release.json`，从发布页把包下到 `release/`（**只下载**） |
 | `wtool unpack-release <项目>…` | 校验 + 解开 `release/` 里的包，写进 `output/` |
-| `wtool install <项目目录\|项目 id\|all>` | 安装（软链接 + shell 块 + 项目的 `install.sh`）；`all` = 装所有不需要你决策的项目（和 `wtool bootstrap` 同一条路） |
+| `wtool install <项目目录\|项目 id\|all> [--prune]` | 安装（软链接 + shell 块 + 项目的 `install.sh`）；`all` = 装所有不需要你决策的项目（和 `wtool bootstrap` 同一条路）；`--prune` 顺手清掉项目里已经删掉的旧软链 |
 | `wtool uninstall <项目目录>` / `--id <项目>` | 卸载，完全还原 |
 | `wtool sudo-install <项目目录>` | 装系统包 / 改系统文件（不可逆，和 `install` 严格分开） |
 | `wtool sudo-uninstall <项目目录>` | 撤销 `sudo-install` |
