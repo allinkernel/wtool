@@ -403,8 +403,9 @@ wtool install editor/astronvim_v5           # 装
 需要对着文档查——现在不用了。）
 
 **反过来也成立**：`~/.wtool/` 下面**不会出现你 `$HOME` 里没有的路径**。
-引擎自己用的东西（自举、中转软链、临时文件）都关在 `~/.wtool/wtool-work-dir/` 里，
-那是唯一一个故意不像家目录的目录。
+引擎自己用的东西都关在 `~/.wtool/` 里，**分两处**：引擎本体（自举下来的那份）
+在 `~/.wtool/bootstrap`，中转软链和临时文件在 `~/.wtool/wtool-work-dir/` ——
+后者是唯一一个故意不像家目录的目录。
 
 **你的家目录里不该多出一个实体文件。** 所以卸载是干净的：
 `wtool uninstall <项目>` 把②里的实体和③里的软链一起撤掉，家目录回到装之前。
@@ -413,8 +414,8 @@ wtool install editor/astronvim_v5           # 装
 你的 `~/.zshrc` 里只会多出**一小段 loader** 指过去，而不是每个项目各插一段。
 （用 bash 的人对应 `~/.wtool/.bashrc`，两个 shell 各有一份，行为一致。）
 
-**引擎自己用的东西**（自举、中转软链、临时文件）都在 `~/.wtool/wtool-work-dir/` 里 ——
-目录名就是它的用途。**状态记录**（谁装过、谁发布过）在 `~/.local/state/wtool/`，
+**引擎自己用的东西**分两处：**自举**下来的引擎在 `~/.wtool/bootstrap`（一条指向工作区
+`bootstrap/` 的软链），**中转软链**和临时文件在 `~/.wtool/wtool-work-dir/` —— 目录名就是它的用途。**状态记录**（谁装过、谁发布过）在 `~/.local/state/wtool/`，
 这个位置是 XDG 标准给"状态"用的，你不会顺手把它当缓存删掉。
 
 ### 1.5 能力和进度：那张表
@@ -1016,7 +1017,7 @@ docker run --rm -it --network=host \
 | 文件 | 什么时候跑 | 干什么 |
 |---|---|---|
 | `build.sh` | `wtool build <项目>` | 自己编，**产物写进项目的 `__output/`** |
-| `install.sh` | `wtool install <项目目录>` | 把 `__output/` 铺进 `~/.wtool/usr`；🚧 **不建 `$HOME` 软链、不写 rc**（那是引擎按 `wtool.xml` 干的 —— 今天项目脚本还自己建） |
+| `install.sh` | `wtool install <项目目录>` | 把 `__output/` 铺进 `~/.wtool/usr`；**不要**自己建 `$HOME` 软链、不要写 rc —— 那是引擎按 `wtool.xml` 干的（顺序上也保证：项目脚本跑完之后引擎才建 `$HOME` 软链） |
 | `install.sh --uninstall` | `wtool uninstall <项目目录>` | 撤销上面做的 |
 
 **下载、打包、上传都不用项目写脚本**：`wtool download-release` / `unpack-release`
