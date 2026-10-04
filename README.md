@@ -44,15 +44,22 @@ git clone https://github.com/allinkernel/wtool-bootstrap.git ~/self/wtool/bootst
 **只有浏览器**：打开上面那个发布页，下最新那一版里的**源码包**，解开。
 包里的第一层固定是 `wtool/`（和本机工作区目录叫什么无关），所以解开之后就有 `wtool/bootstrap/`。
 
-只下这一个也够开张：`cd wtool && ./bootstrap/scripts/install.sh` 就能把 `wtool` 装到本机
-（它不装任何项目，见下面 ④）。别的项目按需再下。
+只下这一个也够开张：解开后跑包里那个安装器（`cd wtool && ./bootstrap/install.sh` —— **路径以包里
+实际有的为准**，有两种可能，见下面 ④），`wtool` 就能用了。别的项目按需再下。
 
 > 地址不是猜的：工作区清单 `.repo/manifests/default.xml` 里 `path="bootstrap"` 那一行写的就是
 > `allinkernel/wtool-bootstrap`，`bootstrap/` 仓库自己的 remote 也是它。
 
 #### ② 各子项目的发布包一览
 
-下面这张表是**每个项目都有哪些发布包** —— 点版本号去 Release 页，点文件名直接下载。
+下面这张表是**引擎查到有发布包的项目** —— 点版本号去 Release 页，点文件名直接下载。
+
+**表里没有的项目 = 引擎这次没查到它的包**（还没发过，或者 tag 对不上）。想找某个项目的包，
+最稳的是直接点开那个项目的 Release 页（每个项目的仓库地址在 §1.7）；只想要源码就干脆走
+§0.2 的 git 那条路。
+
+> **下载这条路拿到的是"上一次发布那一刻"的工作区，不一定是最新源码**（现在线上这批包是
+> 2026-09-15 发的）。要最新的源码，走 §0.2 的 git 那条路。
 
 **这张表由 `wtool docs refresh` 重写，不要手改。** 它拿 `gh` 去 GitHub 查每个项目
 **真实存在**的 release，照查到的结果重写整块（`wtool publish-release` 发布成功之后也会自动跑
@@ -141,10 +148,9 @@ tar -xf wtool-base-2026-09-15.tar.gz
 跑完 `$HOME\self\wtool` 就是一个完整的工作区。
 <!-- <<< wtool:downloads <<< -->
 
-> 上面这一段（表格 + bash / PowerShell 两版命令）也是**引擎生成的**，文件名和链接以它列出的为准。
-> 照着走的时候记住两条：① 工作区根目录那条入口的完整写法是
-> `./bootstrap/scripts/install.sh`（见下面 ④）；② 一个项目的包放进一个目录 ——
-> 别把几个项目的包混在一起（③ 末尾有原因）。
+> 上面这一段（表格 + bash / PowerShell 两版命令）也是**引擎生成的**，文件名和链接以它列出的为准；
+> 里面的安装入口路径按**包里实际有的那个**来（见下面 ④，有两种可能）。另一条提醒：
+> 一个项目的包放进一个目录 —— 别把几个项目的包混在一起（③ 末尾有原因）。
 
 #### ③ 下下来之后：两条路，命令写全
 
@@ -153,19 +159,26 @@ tar -xf wtool-base-2026-09-15.tar.gz
 | 包 | 是什么 | 谁要 |
 |---|---|---|
 | **源码包** | 整个项目的目录树（包里第一层是 `wtool/<项目>/`） | 要自己编的、要改源码的；**拿到工作区**也是靠它 |
-| **产物包** | 编好的东西（`__output/` 里那些）。大的项目会切成 `-vol01`、`-vol02`…，外加一份 `dist.json` 说明每一卷叫什么、按什么顺序拼 | 只想用、不想编的（Neovim 那套就是） |
+| **产物包** | 编好的东西（`__output/` 里那些）。大的项目会切成 `-vol00`、`-vol01`…，外加一份 `dist.json` 说明每一卷叫什么、按什么顺序拼 | 只想用、不想编的。现在线上真发过产物包的是 Neovim 那套：[`editor/astronvim_v5` 的 Release 页](https://github.com/allinkernel/wtool-astronvim_v5/releases) |
 
 **路线 A：手动下（浏览器点，不用 `wtool`）**
 
 1. 在表里（或各项目自己的 Release 页）把要的项目下下来；
 2. 解开**源码包** → 得到工作区（第一层固定是 `wtool/`），`cd` 进去；
-3. 装 `wtool` 自己：`./bootstrap/scripts/install.sh`（见下面 ④）；
-4. 要**产物包**的项目，把 `release.zip`（和分卷、`dist.json`）放进该项目的 `__release/` 目录，然后：
+3. 装 `wtool` 自己：跑包里那个安装器（`./bootstrap/scripts/install.sh` 或 `./bootstrap/install.sh`，见下面 ④）；
+4. 要**产物包**的项目，把包和 `dist.json`（有分卷的话还有全部分卷）放进该项目的 `__release/` 目录，然后：
 
 ```bash
 wtool unpack-release <项目>   # 照 dist.json 校验 + 拼分卷 + 解到 __output/
 wtool install        <项目>   # 登记 + 软链 + shell 集成
 ```
+
+> `unpack-release` 只认**新格式**的 `dist.json`（里面有 `files` 段 —— 今天的 `wtool pack-release`
+> 打出来的就是）。而**现在线上只有 Neovim 那套发过产物包，它那几版是更早的流程发的**
+> （`dist.json` 里只有分卷），`unpack-release` 会明确拒绝这种老包 —— 那种包要用它 Release 页
+> 自带的方式解：把 `dist.json`、`extract.sh` 和所有 `-volNN` 放在同一个目录，`sh extract.sh`
+> 解开，然后照样 `wtool install editor/astronvim_v5` 收尾（**装还是 wtool 的事**，
+> 那个脚本只负责把文件铺到位）。不想碰旧包就自己编：`wtool build editor/astronvim_v5`（见 §2.3）。
 
 **路线 B：只下源码，release 交给 `wtool` 自己下（推荐，省手）**
 
@@ -183,27 +196,33 @@ wtool install          <项目>   # 装
   "这一版该下哪些文件"的清单）。没提交的项目敲了会明说「没有 `scripts/release.json`」，
   那就走路线 A，或者自己编：`wtool build <项目>`（要编译器和网络，几十分钟到几小时）。
 
-> ⚠️ **别把几个项目的包下到同一个目录**：引擎打包时给的文件名是 `源码.zip` / `release.zip`
-> 这种**不带项目名**的名字，放一起会互相覆盖；而且**产物包不能改名**（`dist.json` 是按名字
-> 校验每一卷的）。一个项目一个目录最省事；走路线 B 就完全不用管这件事。
+> ⚠️ **一个项目的包放进一个目录**（尤其是产物包：**不能改名** —— `dist.json` 是按名字校验
+> 每一卷的）。表里那批包名带项目前缀、不会撞；但引擎**现在**打的包叫 `源码.zip` /
+> `release.zip`，**不带项目名** —— 同一版里下好几个项目、又放在一起，就会互相覆盖。
+> 分开存最省事；走路线 B 就完全不用管这件事。
 
-#### ④ 解开之后：装 `wtool` 自己，再让它装项目
+#### ④ 解开之后：跑包里那个安装器
 
-不管走哪条路，拿到工作区之后的步骤完全一样（**第一次要用完整路径** —— 解压出来的工作区
-还没有根目录那几个入口，这个脚本会顺手补齐）：
+**先看 `bootstrap/` 里是哪个安装器** —— 包的年代不同，位置不一样，两个都对，跑你手上那个：
+
+| 包里的路径 | 什么时候打的包 | 它做什么 |
+|---|---|---|
+| `bootstrap/scripts/install.sh` | 新流程（`scripts/` 重构之后） | 准备运行环境 → 自举引擎 → 补工作区入口 → 让 `wtool` 可用。**做完就停，不装任何项目** |
+| `bootstrap/install.sh` | 2026-09 前后那一批（**线上现在这批就是**） | 自举引擎 → 补工作区入口 → 直接交给 `wtool bootstrap`，把项目一起装上（加 `--with-system` 连系统层也做） |
+
+不管跑的是哪个，接着都是这几步（**第一次要用完整路径** —— 解压出来的工作区还没有根目录那几个
+入口，安装器会顺手补齐；之后 `./install.sh` 就能直接用了）：
 
 ```bash
-cd <工作区目录>                  # 比如 ~/self/wtool
-./bootstrap/scripts/install.sh   # 准备运行环境 + 装 wtool 自己；做完就停，不装任何项目
-exec $SHELL                      # 让当前 shell 认识 wtool（或者重开一个终端）
+cd <工作区目录>                    # 比如 ~/self/wtool
+./bootstrap/scripts/install.sh     # ← 旧包换成 ./bootstrap/install.sh
+exec $SHELL                        # 让当前 shell 认识 wtool（或者重开一个终端）
 
-wtool sudo-bootstrap             # 系统层：apt 包、/etc 下的文件。要 root；没有 sudo 就跳过
-wtool bootstrap                  # 用户层：文件、软链、shell 集成。不要 sudo、不联网
+wtool sudo-bootstrap               # 系统层：apt 包、/etc 下的文件。要 root；没有 sudo 就跳过
+wtool bootstrap                    # 用户层：文件、软链、shell 集成（重复跑没有副作用）
 ```
 
-`./bootstrap/scripts/install.sh` 只走四步：准备运行环境（缺 `python3`/`git` 就装上）、
-自举引擎到 `~/.wtool/bootstrap`、补齐工作区入口（`./install.sh`、`./README.md`…）、
-让 `wtool` 进 `PATH`。**它一个项目都不装**，屏幕最后会把接下来该敲的命令直接打给你。
+（新的那个安装器只做上面表里写的四步，屏幕最后会把接下来该敲的命令直接打给你；旧的会一路装下去。）
 
 > **安装说明只有这一处权威：本文档**（细节版是 [`guide.md`](guide.md)）。
 > 子项目自己的 README 只讲「这个项目是什么、有哪些脚本」，不另写一套安装步骤。
