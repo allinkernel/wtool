@@ -177,7 +177,12 @@ wtool validate ./terminal/ripgrep
 | `wtool pull-layer <项目>…` | 从镜像仓库把层镜像拉到 `__layer/`（目标机不需要 docker） |
 | `wtool bootstrap` | 把所有项目 `install` 一遍（不做系统层），需要先产出的会跳过 |
 | `wtool sudo-bootstrap` | 所有项目的 `sudo-install` |
+| `wtool status` | 不带项目：**登记表 + 软链检查** —— 登记过的软链都还在吗，顺带列出登记表 |
 | `wtool status <项目>` | 看板某一格看不懂？逐列给状态 + 对应命令 + 依据（看「裸跑」那一节后面的用法） |
+| `wtool check [<项目>]` | 声明 / 日志 / 磁盘三者对比，**只报不改** |
+| `wtool repair [<项目>\|all]` | 修 `check` 报出来的（**只重建、不删除**，也不跑项目脚本） |
+| `wtool kill-self-forever` | 删掉 wtool 的一切痕迹（**含状态记录**），删之前要你逐字确认 |
+| `wtool docs refresh` | 重刷 README 第 2 节那张"没有 `git clone` 怎么装"的下载表（`wtool docs`、`wtool refresh-downloads` 同义） |
 | `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool version` | 版本 |
 
@@ -299,10 +304,32 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 `--verbose` 再多一段"明细"（装过什么时候、产物从哪来、发布过没）；
 `--summary` 只打一行汇总。
 
-### 某一格看不懂 / 想知道为什么：`wtool status <项目>`
+### `wtool status`：登记表体检 / 某一格看不懂的原因
 
-看板第 1 段是"一眼看全"，它不解释**为什么**。想知道某一格是怎么算出来的、
-接下来该敲哪条命令，就用 `wtool status <项目>`：它把那一行**逐列摊开**，
+`wtool status` 有**两种形态**，按你手里有没有项目名挑。
+
+**不带参数 = 登记表 + 软链检查**（一次快速体检）：把登记过的软链逐条看一遍，
+缺了就报 `缺失: <路径>（项目 <id>）`，全在就报一句条数，最后附一张登记表。
+典型的用法是"我是不是把哪个软链删掉了"：
+
+```bash
+wtool status
+```
+
+```
+wtool: 所有登记的软链都在（2 条）
+
+PROJECT      KIND     DEST
+terminal/tmux file     /home/<你>/.tmux.conf
+tools/repo    dir      /home/<你>/.wtool/wtool-work-dir/links/tools/repo
+```
+
+> 它查的是**登记过的**那些软链（`wtool install` 记下来的账），不扫整个 `$HOME` ——
+> 所以你自己手工建的软链不会被它误报，也不会被它删。
+
+**带项目 = 逐列状态 + 依据**：看板第 1 段是"一眼看全"，它不解释**为什么**。
+想知道某一格是怎么算出来的、接下来该敲哪条命令，就用 `wtool status <项目>`：
+它把那一行**逐列摊开**，
 每列给三样东西 —— **状态**（和看板里那一格一模一样）、**对应的命令**、**依据**
 （这一格是从哪看出来的）。项目写全名或者末段都行：
 
@@ -545,6 +572,38 @@ wtool/terminal/tmux/wtool.xml
 
 发布结束后，本文档所在仓库 README 里的下载链接会自动重写成最新的——那一段是脚本生成的，不用手动维护。
 
+### 刷新下载页：`wtool docs refresh`
+
+README 第 2 节那张表（"没有 `git clone` 的时候怎么装"）不是手写的，它由这条命令生成：
+
+```bash
+wtool docs refresh      # 完整写法
+wtool docs              # 不带 refresh 也行，同一条命令
+wtool refresh-downloads # 还是一个东西（这条不在 --help 清单里）
+```
+
+**它做什么**：按项目表逐个去 GitHub 查**真实存在**的 release（`gh release view`），
+把资产名字、直链、大小重写成表里的行。链接以线上为准、不拿本地记录猜，
+所以表里不会出现点不开的地址。
+
+**什么时候用**：平时不用 —— `wtool publish-release` 发成功之后会自动跑一遍。
+要手动跑只有两种情况：
+
+- 改了项目的发布配置（`wtool.xml` / `scripts/release.json`），想立刻让表跟上；
+- 在别的机器上发过版本，本机的表还是旧的。
+
+**跑之前要知道的三件事**：
+
+1. **要 `gh`（GitHub CLI）并且已登录。** 没有 `gh` 就跳过、只警告一句，不算失败。
+2. **它改的是文档**：带 `<!-- >>> wtool:downloads >>> -->` 标记的那一块。
+   改完就是普通的工作区改动 —— `git diff` 能看、`git checkout` 能退，
+   提交不提交由你决定。
+3. **它拒绝用空表覆盖已有的表。** 如果这次查到 0 个资产（`gh` 没登录、网络不通、
+   release 被删，都会这样），而文档里本来有表，它会停手并告诉你可能的原因 ——
+   免得一次网络故障把几十条链接清空。确认确实要清空，才加 `--force`。
+
+想知道它**这次会动哪个文档**，加 `--dry-run`：只打印文档路径，不写。
+
 ### `wtool bootstrap`
 
 ```bash
@@ -572,10 +631,41 @@ wtool bootstrap --force            # 目录有未提交改动也照装
 ### 其它
 
 ```bash
-wtool status <项目>        # 逐列说明某一格的状态、对应命令和依据（只看不动）
+wtool status               # 登记表 + 软链检查（不带项目）
+wtool status <项目>         # 逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate ./terminal/tmux
 wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quiet)" 立刻在当前 shell 生效
+wtool docs refresh         # 重刷 README 第 2 节的下载表
 ```
+
+**`wtool repair [<项目>|all]` —— 坏了自己修回来**（`check` 报什么修什么）：
+
+```bash
+wtool check                # 先看：声明 / 日志 / 磁盘三者哪里对不上
+wtool repair all           # 再修：补中转链接、补 $HOME 软链、重写 shell 集成块
+wtool repair terminal/tmux --dry-run   # 先看它要补什么
+```
+
+它的边界要说清楚，免得期待过高：
+
+- **只重建，不删除** —— 磁盘上多出来的东西它不碰（那些要人来判断）；
+- **不跑项目的 `install.sh`** —— 那可能重新编译或下载，`repair` 不猜你想干什么；
+  项目脚本装出来的实体缺了，得重新 `wtool install <项目>`；
+- 它做的就是 `check` 会报的那几类修复：重跑一遍 `install` 的**引擎部分**
+  （补中转链接、补 `$HOME` 软链、重写 shell 集成块、把 `~/usr` 重新接上），
+  所以**先 `check` 再 `repair`** 是最顺的顺序。
+
+**`wtool kill-self-forever` —— 连账本一起删干净**（第 3 条卸载命令，别拿它当日常）：
+
+```bash
+wtool kill-self-forever --dry-run   # 先看它会删什么、不删什么
+wtool kill-self-forever             # 要逐字输入 KILL-SELF-FOREVER 才动手
+```
+
+`wtool uninstall all` 撤的是"装过的东西"，`kill-self-forever` 连**状态记录**
+（`~/.local/state/wtool/`：谁装过、发布过什么）一起删 —— 删完 wtool 就像没来过这台机器。
+所以它先列清单、再要你逐字确认，敲错一个字就什么都不做。
+**它不删** apt 包和 `/etc` 的改动（那是 `sudo-uninstall` 的事）、也不删项目仓库本身。
 
 ---
 
@@ -671,17 +761,21 @@ bash / zsh（补全只做了这两份）。
 ```bash
 cd <工作区目录>
 wtool check                        # 看哪些登记的链接不见了（声明/日志/磁盘对比）
-wtool install <项目目录> --force    # 重新装一遍
+wtool repair all                   # 让引擎把缺的补回来（只补不删，不跑项目脚本）
+wtool install <项目目录> --force    # 项目脚本装出来的实体也缺了，才重新装一遍
 ```
 
-`install` 是幂等的，重装不会出问题。
+`install` 是幂等的，重装不会出问题；`repair` 更轻，适合"只是软链丢了"这种情况。
+两者的分工和边界见 §2「其它」那一节。
 
 **想彻底退回去**
 
 ```bash
 cd <工作区目录>
 wtool uninstall <项目目录>          # 一个项目
-./uninstall.sh                     # 整个工作区（在工作区根目录跑）
+wtool uninstall all                # 所有项目（=$HOME 软链 + ~/.wtool 里的实体）
+./uninstall.sh                     # 连 wtool 自己一起卸（在工作区根目录跑）
+wtool kill-self-forever            # 最后：连状态记录也删掉，要求逐字确认
 ```
 
 **shell 里 `wtool` 命令找不到**

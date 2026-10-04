@@ -195,6 +195,11 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | `wtool pack-release <路径>` | 打成**两个包**（源码包 + 产物包）写进项目的 `__release/`，各带一个校验文件 | ❌ | ❌ | 删掉 `__release/` 就没了 |
 | `wtool unpack-release <路径>` | 在另一台机器上把包**校验 + 解开**（大项目是分卷的），解到 `__output/` | ❌ | ❌ | 同上 |
 | `wtool publish-release [<路径>]` | **只上传**：把 `__release/` 里的东西传到项目自己的 GitHub Release 页，然后写下"这一版有什么"的下载声明 | ❌ | ✅ | 已经被人下载走的收不回来 |
+| `wtool docs refresh` | 重刷这份 README 里「没有 `git clone` 的时候怎么装」那张下载表：拿 `gh` 去 GitHub 查每个项目**真实存在**的 release，照它重写（第 2 节那一块就是它写的） | ❌ | ✅（要 `gh` 且已登录） | 改的是文档，`git checkout` 就能回退 |
+
+> `wtool docs` 单独敲、`wtool docs refresh`、`wtool refresh-downloads` —— **三个入口同一条命令**。
+> 它不在 `wtool --help` 的清单里，平时也不用记：`wtool publish-release` 发成功之后会自动跑一遍。
+> 什么时候需要手动跑、跑不动怎么查，见第 3.7 节。
 
 **层（只有容器构建的项目才有，比如 Neovim 那套）**
 
@@ -235,6 +240,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 |---|---|
 | `wtool` | 不带参数跑一下 = 第 1.5 节那张能力总览表 |
 | `wtool doctor` | 环境诊断（版本、系统、状态目录、缺什么） |
+| `wtool status` | 不带项目 = **登记表 + 软链检查**：`$HOME` 里登记的软链还在不在（全在就报条数），顺带把"哪个项目装了哪些落点"列出来 |
 | `wtool status <项目>` | 看板上某一格看不懂？逐列给你状态 + 对应命令 + 依据（第 1.5 节） |
 | `wtool validate <路径>` | 检查某个项目的 `wtool.xml` 写得对不对 |
 | `wtool init <目录>` | 新建一个 wtool 项目 |
@@ -668,6 +674,11 @@ wtool status editor/astronvim_v5
 
 每个项目的最新版本都在它自己的 Release 页面里，包已经按正确目录结构打好，**全部下载、解开，得到的就是一个完整的工作区**。
 
+下面那张表**不要手改** —— 它由 `wtool` 自动重写：发布新版本时 `wtool publish-release`
+会顺手刷新一遍，也可以手动跑 `wtool docs refresh`（`wtool refresh-downloads` 同义）。
+表里的链接一律以 GitHub 上**真实存在**的 release 为准，所以不会出现点不开的地址；
+刷新不动、或者刷出空表时怎么查，见第 3.7 节。
+
 <!-- >>> wtool:downloads >>> -->
 <!-- 这一块由 `wtool publish-release` 自动重写，不要手改。 -->
 
@@ -961,17 +972,49 @@ mv layer __layer        # 老的层仓库
 
 ```bash
 wtool doctor                        # 环境诊断（版本、系统、状态目录、缺什么）
-wtool status <项目>                  # 逐列说明某一格的状态、对应命令和依据（只看不动）
+wtool status                        # 不带项目：登记表 + 软链检查（登记的软链还都在吗）
+wtool status <项目>                  # 给了项目：逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate <项目目录>            # 检查某个项目的 wtool.xml 写得对不对
 wtool init <目录> [--id ID] [--priority N] [--all]   # 新建一个 wtool 项目
+wtool docs refresh                  # 重刷第 2 节那张下载表（= wtool docs / wtool refresh-downloads）
 wtool version
 ```
 
+**`wtool status` 两种形态**（两个都留着，按你手里有没有项目名挑）：
+
+- **不带参数** —— 快速体检：把登记过的软链逐条看一遍，缺了就报 `缺失: <路径>（项目 <id>）`，
+  全在就报一句 `所有登记的软链都在（N 条）`，最后附一张登记表（项目 / 种类 / 落点）。
+  典型的用法是"我是不是把什么东西删掉了"。
+- **带项目**（目录、项目 id、末段都行）—— 逐列给「状态 + 对应命令 + 依据」，
+  用来看懂看板上某一格为什么是那个状态。
+
+**`wtool docs refresh` 什么时候用**：第 2 节那张下载表是自动维护的，`publish-release`
+发成功之后会自己刷一遍，所以**平时不用管**。要手动跑只有两种情况：
+
+- 改了某个项目的发布配置（`wtool.xml` / `scripts/release.json`），想立刻让表跟上；
+- 在别的机器上发过版本，本机的表还是旧的（表取的是 GitHub 上的真实 release，不是本地记录）。
+
+跑之前要知道三件事（都是它的实际行为）：
+
+1. **它要 `gh`（GitHub CLI）且已登录。** 没有 `gh` 就跳过并警告一句，不会硬失败。
+2. **它改的是文档**（带 `<!-- >>> wtool:downloads >>> -->` 标记的那一块），
+   改完是普通的工作区改动 —— `git diff` 能看、`git checkout` 能退。
+3. **它拒绝用空表覆盖已有的表**：如果查到 0 个资产（`gh` 没登录、网络不通、
+   release 被删都会这样），而文档里本来有下载表，它会警告并停手 ——
+   防止一次网络故障把 30 条链接清空。确认确实要清空才加 `--force`。
+
 `build` / `download-release` / `unpack-release` / `install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `pack-release` / `publish-release` / `unpack-layer` / `push-layer` /
-`pull-layer` / `bootstrap` / `sudo-bootstrap` / `repair`
+`pull-layer` / `bootstrap` / `sudo-bootstrap` / `repair` / `kill-self-forever`
 都支持 `--dry-run`：先打印计划、不真的动系统。
-`status` / `doctor` / `validate` 这些只看不动的没有这个开关。
+**`--dry-run` 时项目自己的 `scripts/install.sh` / `scripts/build.sh` 根本不会被执行** ——
+引擎只打印"真跑的话会跑哪条脚本、带什么参数、在哪个目录、给什么环境变量"，
+所以哪怕脚本自己没写 dry-run 支持，也不会有任何副作用。
+`status` / `doctor` / `validate` 这些只看不动的没有这个开关；
+`docs refresh` / `kill-self-forever` 也有 `--dry-run`（前者只打印"要刷哪个文档"，
+后者只打印"会删什么、不删什么"）。
+
+`repair` 和 `kill-self-forever` 分别在第 3.6、3.5 节。
 
 `wtool` 不带参数跑一下就是第 1 节那张能力总览表。
 
