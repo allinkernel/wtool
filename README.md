@@ -880,11 +880,18 @@ docker run --rm -it --network=host \
   ubuntu:24.04 bash /wtool/bootstrap/scripts/container-shell.sh
 ```
 
-`--user <名字>` 做什么（顺序有意义）：先**测速挑 apt 源**（结果记在新用户的
-`~/.local/state/wtool/mirror.txt` 里，后面 `./install.sh` 直接接着用，不再测第二遍）、
-装 `sudo`（ubuntu 基础镜像里**没有**它）、建这个用户（家目录 + bash +
-**密码 `root`** + sudo 免密），最后 `su - <名字>` 切进去。不带 `--user` 时行为
-一个字没变（root 进去、什么都不装）。
+`--user <名字>` **只做三件事**（顺序有意义），然后 `su - <名字>` 切进去：
+
+1. **建这个普通用户**：家目录 + bash、**密码 `root`**、`/etc/sudoers.d` 免密
+   （uid 尽量对齐宿主，挂进来的工作区才不会被 git 说"别人的仓库"）
+2. **测速挑 apt 源**：国内几个镜像站各下一个索引比速度，让你挑一个（不挑就自动
+   选最快的）—— 结果记在新用户的 `~/.local/state/wtool/mirror.txt` 里，
+   后面 `./install.sh` 直接接着用，**不再测第二遍**
+3. **装 `sudo` 这个包**（ubuntu 基础镜像里没有它：有 sudo 组、没 sudo 命令）
+
+**除此之外没有别的**：它不跑 `./install.sh`，也不装 python3 / git / curl / ansible，
+更不碰工作区 —— 那些都是你进去之后照着提示自己敲的事。不带 `--user` 时行为
+一个字没变（root 进去、这三件事一件都不做）。
 
 两个脚本进来时都会**自动探测宿主机的代理**（默认探 `127.0.0.1:7897`）并接上。这一步不能省：`docker run` 不会把你 shell 里的代理变量带进容器，不接的话容器里是"裸网"，所有下载都失败，而人很容易把它误判成"网络坏了"。这也是 `--network=host` 不能省的原因——只有在 host 网络下，容器里的 `127.0.0.1` 才是宿主自己。不想要自动探测就加 `-e WTOOL_NO_PROXY=1`，代理不在默认端口就加 `-e WTOOL_HOST_PROXY=http://127.0.0.1:端口`。
 
