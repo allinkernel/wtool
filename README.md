@@ -35,7 +35,8 @@ cd <工作区目录>
 exec $SHELL
 #    或者干脆重开一个终端
 
-# 4. 装系统层的东西：apt 软件包、系统配置文件（换 apt 源之类）。这一步可能要 sudo
+# 4. 装系统层的东西：apt 软件包、系统配置文件（换 apt 源之类）。这一步要 root
+#    没有 sudo 的机器直接跳过它，前面几步照样成立（见下面「没有 sudo 的机器」）
 wtool sudo-bootstrap
 
 # 5. 装其余的项目：文件、软链、shell 集成。不需要 sudo，也不联网
@@ -58,6 +59,46 @@ wtool bootstrap
 （缺依赖、源连不上）；后面几条挂了 = 某个项目自己的问题。
 
 第 2 步跑完它会把后面该做什么直接打在屏幕上，不用回来翻文档。
+
+**没有 sudo 的机器（公司机器很常见）照样能装。** 跑第 2 步（`./install.sh`）时，它一上来
+先判断这台机器是哪种：本来就是 root / `sudo` 免密 / 有 `sudo` 但要密码 / 根本没有 `sudo`。
+要密码时，**能确认你有 sudo** 它就会问一次（先把将要执行的命令打给你看）：输密码就继续，
+直接回车就跳过要 root 的那部分。**装 wtool 自己（引擎 + `~/.wtool` + 软链）一个 root 都不需要** —— 没有 sudo
+也能装完，之后 `wtool install <项目>` / `wtool bootstrap` 装 tmux、zsh 这些照样能用。
+只有系统层（`wtool sudo-bootstrap` / `wtool sudo-install`）要 root —— 那时候再找管理员，
+不耽误前面。
+
+> wtool **不会为了判断去弹密码框**：它靠"你在不在 `sudo`/`wheel` 组"来判断
+> （标准配置就是靠组给权限），所以"有 sudo、只是要密码"的机器它**认得出来** ——
+> `./install.sh` 会在这里问你一次密码（回车 = 跳过要 root 的那部分，并把该装什么打给你看）。
+> 跳过也不影响 wtool 本体：自己敲一遍它打出来的 `sudo apt-get install ...` 就行。
+>
+> 如果连 `python3` / `git` 都没有、又装不上（没有 sudo），它会明确告诉你
+> "让管理员装这两个包"，然后**停在准备运行环境这一步**（不会装作装好了）——
+> 因为规划器要 `python3`、读仓库要 `git`，这两样确实绕不过去。
+
+**装包时屏幕会动，不是卡死。** 它准备运行环境、用 apt 装东西时，每 5 秒打一行心跳：
+
+```
+wtool-install:     还在装…（30 秒）  · Get:3 http://… 45.2 MB/120 MB
+```
+
+以前下载几分钟屏幕上什么都没有，看起来像卡死。看到这行就说明它还活着；
+apt 最后一行在做什么，它顺手贴出来了。
+
+**第 2 步里已经把 Tab 补全挂好了。** 装的是引擎自己那个项目（`wtool install bootstrap`），
+它的环境变量块会带上补全脚本 —— 做完第 3 步（重开 shell）之后，`wtool` 后面按 Tab
+列的是 wtool 自己的候选，而不是当前目录里的文件：
+
+```bash
+wtool <TAB>            # 列子命令（install / bootstrap / pack-release …）
+wtool install <TAB>    # 列项目 id，外加 all
+wtool install --<TAB>  # 列这个命令认的开关（--dry-run / --force / --prune …）
+```
+
+给不出候选时（比如参数本来就是路径）会退回补文件名，所以没破坏原来的习惯。
+bash 和 zsh 各一份、行为一致；内部命令（`_layer-save` 这种下划线开头的）不进候选，
+这台机器没有 sudo 时 `sudo-*` 那几个命令也不进候选。用法细节见第 3.2 节。
 
 **不想在真机上试？** 用容器跑一遍（`--network=host` 不能省：容器里的
 `127.0.0.1` 只有在这个网络模式下才是宿主自己，脚本靠它自动接上宿主代理）：
@@ -144,8 +185,8 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 |---|---|---|---|---|
 | `wtool install <路径>` | 把 `__output/` 铺进 `~/.wtool/usr`，再在 `$HOME` 里建软链、加 shell 集成 | **❌ 永不要** | **❌ 永不联网** | **完全可逆**，一条命令原样撤回 |
 | `wtool uninstall <路径>` | 撤销 `install` | **❌ 永不要** | ❌ | —— |
-| `wtool sudo-install <路径>` | 装系统软件包、改系统文件（换 apt 源之类） | 🚧 **可能要** | ✅ | ⚠️ apt 包撤不干净；`/etc` 下的文件可以还原 |
-| `wtool sudo-uninstall <路径>` | 撤销 `sudo-install`：卸载 apt 包 + 还原 `/etc` | 🚧 **可能要** | ❌ | —— |
+| `wtool sudo-install <路径>` | 装系统软件包、改系统文件（换 apt 源之类） | ⚠️ **可能要** | ✅ | ⚠️ apt 包撤不干净；`/etc` 下的文件可以还原 |
+| `wtool sudo-uninstall <路径>` | 撤销 `sudo-install`：卸载 apt 包 + 还原 `/etc` | ⚠️ **可能要** | ❌ | —— |
 
 **打包与分发**
 
@@ -173,7 +214,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | 命令 | 做什么 | 要 sudo 吗 | 碰网络吗 | 可撤吗 |
 |---|---|---|---|---|
 | `wtool bootstrap` | 所有项目 `install` 一遍 | ❌ | ❌ | 逐个 `uninstall` 即可 |
-| `wtool sudo-bootstrap` | 所有项目 `sudo-install` 一遍 | 🚧 可能要 | ✅ | 同上，逐个项目来 |
+| `wtool sudo-bootstrap` | 所有项目 `sudo-install` 一遍 | ⚠️ 可能要 | ✅ | 同上，逐个项目来 |
 
 **检查与修复**
 
@@ -398,7 +439,7 @@ wtool install editor/astronvim_v5           # 装
 
 **`build` / `install` 这两项能力，就由这两个脚本在不在决定**（`install` 还有一条来源：
 `wtool.xml` 里声明了 `link` 或 `zshrc`/`bashrc` 也算有）。`wtool` 不带参数跑一下，
-会看到一张表和四段计划：
+会看到一张表和四段计划。**下面这个例子来自一台有 sudo 的机器（11 列）**：
 
 ```
 ┌─────────────────────────┬──────┬────────┬─────────┬───────────┬────────┬─────────┬────────┬─────────┬──────────┬────────┐
@@ -414,6 +455,45 @@ wtool install editor/astronvim_v5           # 装
 
 （这是在一台**什么都没装过**的机器上跑出来的样子，所以状态列大多是"可执行"。
 你自己的机器上装过的项目会显示"已完成"。）
+
+**这台机器上没有 sudo 的话，表会少两列。** 看板**每次跑都重新探一次**这台机器能不能提权
+（权限可能刚加上），判定的结果直接决定摆哪几列：
+
+- **能提权**（本来就是 root / `sudo` 免密 / 刚输过密码、凭证还在缓存里）：11 列，
+  `sudo` 和 `sudo-un` 在其中；
+- **不能**（没有 sudo；有 sudo 但要密码、而凭证已经过期；或者你设了 `WTOOL_SUDO=never`，
+  见下）：**不列这两列**，9 列：
+
+```
+┌─────────────────────────┬──────┬────────┬─────────┬───────────┬────────┬─────────┬──────────┬────────┐
+│ 项目                    │ prio │ build  │ install │ uninstall │  pack  │ publish │ download │ layer  │
+├─────────────────────────┼──────┼────────┼─────────┼───────────┼────────┼─────────┼──────────┼────────┤
+│ bootstrap               │ 5    │ 不支持 │ 可执行  │ 未安装    │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ os/ubuntu               │ 5    │ 不支持 │ 不支持  │ 不支持    │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ terminal/tmux           │ 50   │ 不支持 │ 可执行  │ 未安装    │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ editor/astronvim_v5     │ 70   │ 可执行 │ 待产出  │ 未安装    │ 待产出 │ 可执行  │ 未发布   │ 可执行 │
+│ themes/typora/lightmind │ 100  │ 不支持 │ 不支持  │ 不支持    │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+└─────────────────────────┴──────┴────────┴─────────┴───────────┴────────┴─────────┴──────────┴────────┘
+```
+
+这两列消失时，表下面的图例会写清原因和后果：
+
+```
+⚠️ 这台机器上没有 sudo → 少列了 sudo / sudo-un 两列。
+   拿到 sudo 权限之后重跑 wtool 就会自动出现（每次都会现探）。
+```
+
+看板**不缓存**这个判定：权限或凭证一变（刚被加进免密 `sudo`、刚输过一次密码……），
+不用重装、不用重开 shell，重跑一次 `wtool` 就看到了。
+
+> **有 sudo 但要密码的机器**：照样列那两列（wtool 靠"你在不在 `sudo`/`wheel` 组"判断，
+> 不会为了探测弹密码框）。真去跑 `wtool sudo-bootstrap` 时，系统会照常问你要密码。
+> 判断实在不准（比如用了 `NOPASSWD`/`Cmnd_Alias` 之类的特殊配置），
+> 用 `WTOOL_SUDO=yes` / `=never` 直接告诉它。
+
+**`WTOOL_SUDO=never`：明确告诉 wtool"这台机器别碰 sudo"。** 公司机器上常用 ——
+有些机器不是装不上 sudo，而是**根本不该用**。设了它，看板就当"没有 sudo"（9 列）、
+Tab 补全也不提 `sudo-*`；它只影响 wtool 怎么判断，`sudo-*` 命令本身没被删掉。
 
 **每一列就是一个命令**（表下面还有一行图例，**逐条写全，不省略**）：
 
@@ -432,6 +512,8 @@ wtool install editor/astronvim_v5           # 装
 项目脚本只有 `build.sh` / `install.sh` 两种（上表那两列），
 其余几列是**引擎**的命令 —— 摆出来是为了让你一眼看到"这个项目还能做什么"。
 （`wtool _layer-save` / `_layer-load` 是**内部命令**，不在图例里、也不在 `--help` 的主清单里。）
+**图例里的 `sudo` / `sudo-un` 两行，在没有 sudo 的机器上不出现** —— 那两列本来就没摆出来
+（见前面那张 9 列的表）。
 
 表后面还有四段：`wtool install` 能装哪些、`wtool sudo-install` 能装哪些、
 `wtool bootstrap` 这次会装哪些（按顺序、谁被跳过）、`wtool sudo-bootstrap` 会跑哪些。
@@ -455,6 +537,9 @@ wtool install editor/astronvim_v5           # 装
 - **装之前**：`install` = 可执行，`uninstall` = 未安装（没东西可撤）；
 - **装之后**：`install` = 已完成，`uninstall` = 可执行（现在撤得掉）。
 
+`sudo` / `sudo-un` 同理（`sudo-bootstrap` 跑过就会变绿）。**没有 sudo 的机器上这两列不摆出来**，
+这条对应关系也就无从谈起 —— 见前面那张 9 列的表。
+
 `install` 那一列显示的是**你这台机器上的进度**，所以它会变：装过一个项目就从黄变绿，
 换台机器或者卸掉它又变回黄。（`build` / `sudo` 那两列同理：跑过一次就变绿。）
 
@@ -470,7 +555,8 @@ wtool install editor/astronvim_v5           # 装
 【图片占位】![wtool 能力总览](.pic/table.png)
 
 <!-- TODO: 在装好 wtool 的机器上执行 `wtool`，把输出截图保存为 .pic/table.png
-     建议终端宽度 120 列以上（这张表有 11 列）、保留颜色，这样六种状态的区别看得出来。 -->
+     建议终端宽度 120 列以上（有 sudo 的机器上这张表 11 列，没有 sudo 就 9 列）、
+     保留颜色，这样六种状态的区别看得出来。 -->
 
 ### 1.6 现在到哪一步了
 
@@ -628,7 +714,7 @@ wtool-install:   README.md -> wtool-base/README.md
 
 之后 `./install.sh` 就能直接用了，和 `repo sync` 出来的工作区完全一样。
 
-这个脚本只走四步：准备运行环境（缺 `python3`/`git` 就装上）、自举引擎到 `~/.wtool/wtool-work-dir/`（引擎自己的东西都收在这一个目录下，见 1.4）、补齐上面那些工作区入口、让 `wtool` 进 `PATH`。**做完就停，它不装任何项目**——屏幕最后会直接把接下来该敲的命令打给你（`exec $SHELL`，然后 `wtool sudo-bootstrap` / `wtool bootstrap`），照着走即可。
+这个脚本只走四步：准备运行环境（缺 `python3`/`git` 就装上；**没有 sudo 时会告诉你该让管理员装什么，然后停在这里**，见第 0 节）、自举引擎到 `~/.wtool/bootstrap`、补齐上面那些工作区入口、让 `wtool` 进 `PATH`。**做完就停，它不装任何项目**——屏幕最后会直接把接下来该敲的命令打给你（`exec $SHELL`，然后 `wtool sudo-bootstrap` / `wtool bootstrap`），照着走即可。没有 sudo 的机器跳过 `wtool sudo-bootstrap` 那条即可，`wtool bootstrap` 照样能用。
 
 **要编译产物的项目（现在只有 Neovim 那套）还有一步**：它的 Release 页面里除了源码包，
 还有产物包（大项目是若干分卷，配一个 `dist.json`）。把这些下到项目的 `__release/` 目录下，
@@ -669,6 +755,22 @@ wtool install terminal/tmux         # 装一个项目
 wtool uninstall terminal/tmux       # 撤销，系统回到装之前
 ```
 
+**这一节的命令都不需要 root。** 没有 sudo 的机器上 `wtool install <项目>` /
+`wtool bootstrap` 照样能用 —— 只有下面那两条 `sudo-*` 才要 root（要的时候再找管理员）。
+
+**按 Tab 让它告诉你有什么可装。** 装完 wtool 自己、重开过 shell 之后，
+`wtool` 后面按 Tab 就是 wtool 自己的候选（不是当前目录的文件）：
+
+| 你敲 | 补出什么 |
+|---|---|
+| `wtool <TAB>` | 子命令（`install` / `bootstrap` / `pack-release` …） |
+| `wtool install <TAB>` | 项目 id（`terminal/tmux` 这种），外加 `all` |
+| `wtool install --<TAB>` | 这个命令认的开关（`--dry-run` / `--force` / `--prune` …） |
+| 参数是路径时 | 退回补文件名（和平时一样） |
+
+bash 和 zsh 都有、行为一致。内部命令（`_layer-save` 这种下划线开头的）不进候选；
+这台机器没有 sudo 时 `sudo-*` 也不进候选，和看板一个口径。
+
 `install` 是完全可逆的。想先看看它会做什么：
 
 ```bash
@@ -686,10 +788,10 @@ wtool install terminal/tmux --dry-run
 
 先①后②不能反：②建的软链**指向**①铺出来的东西，反了就是先建一堆悬空链接。
 
-一次把不需要你先决策的项目都装上：
+一次把不需要你先决策的项目都装上（`wtool install all` 和 `wtool bootstrap` 是同一条路）：
 
 ```bash
-wtool sudo-bootstrap     # 系统层：apt 包、/etc 下的文件。可能要 sudo
+wtool sudo-bootstrap     # 系统层：apt 包、/etc 下的文件。要 root；没有 sudo 就跳过这条
 wtool bootstrap          # 用户层：文件、软链、shell 集成。不需要 sudo、不联网
 ```
 
@@ -767,7 +869,7 @@ wtool publish-release --dry-run       # 先看计划
 | 命令 | 管什么 | 要 sudo 吗 |
 |---|---|---|
 | `wtool uninstall all` | 撤销所有 `install`：`$HOME` 里的软链 + `~/.wtool` 里的实体 | ❌ |
-| `wtool sudo-uninstall all` | 撤销所有 `sudo-install`：卸载 apt 包、还原 `/etc` 下的文件 | 🚧 可能要 |
+| `wtool sudo-uninstall all` | 撤销所有 `sudo-install`：卸载 apt 包、还原 `/etc` 下的文件 | ⚠️ 可能要 |
 | `wtool kill-self-forever` | 删掉 wtool 的一切痕迹，**含 `~/.local/state/wtool/` 里的状态记录** | ❌ |
 
 `wtool uninstall` **不越权**：它不会去还原 `/etc`，因为那是 `sudo-uninstall` 的事。
@@ -894,6 +996,17 @@ docker run --rm -it --network=host \
 一个字没变（root 进去、这三件事一件都不做）。
 
 两个脚本进来时都会**自动探测宿主机的代理**（默认探 `127.0.0.1:7897`）并接上。这一步不能省：`docker run` 不会把你 shell 里的代理变量带进容器，不接的话容器里是"裸网"，所有下载都失败，而人很容易把它误判成"网络坏了"。这也是 `--network=host` 不能省的原因——只有在 host 网络下，容器里的 `127.0.0.1` 才是宿主自己。不想要自动探测就加 `-e WTOOL_NO_PROXY=1`，代理不在默认端口就加 `-e WTOOL_HOST_PROXY=http://127.0.0.1:端口`。
+
+**进去之后会看到的两件事**（别误判）：
+
+- `./install.sh` 装包时每 5 秒打一行 `还在装…（N 秒）· <apt 最后一行>`。容器里下载本来就慢
+  （走代理时更慢），以前屏幕上几分钟没动静，人以为卡死就把容器 Ctrl-C 了 —— 有这行就说明它还活着。
+- 交给你的是**新开的 shell**（脚本最后 `exec bash -i`），所以 Tab 补全直接就能用：
+  `wtool <TAB>` 列子命令、`wtool install <TAB>` 列项目 id（见 3.2）。
+
+**看板列数取决于容器里这个用户能不能提权**：不带 `--user` 时你是 root，`--user` 建的那个
+普通用户是 **sudo 免密**，两种都算"有 sudo"，看板是 11 列；想看"没有 sudo"的 9 列，
+得用一个真没有 sudo 的用户（判定规则见 1.5）。
 
 ### 4.4 每个项目自己的 `scripts/`
 

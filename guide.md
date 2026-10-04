@@ -181,12 +181,34 @@ wtool validate ./terminal/ripgrep
 | `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool version` | 版本 |
 
+### Tab 补全（bash / zsh）
+
+wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**，不是当前目录里的文件：
+
+| 你敲 | 补出什么 |
+|---|---|
+| `wtool <TAB>` | 子命令：`install` / `bootstrap` / `pack-release` / `doctor` … |
+| `wtool install <TAB>` | 项目 id（`terminal/tmux` 这种），外加 `all`、以及它认的开关 |
+| `wtool install --<TAB>` | 这个命令的开关：`--dry-run` / `--force` / `--prune` … |
+| `wtool build editor/<TAB>` | 认项目的命令都会列项目 id（`build` / `unpack-release` / `push-layer` …） |
+| 给不出候选时 | 退回 shell 自己的文件名补全（参数是路径的情况照旧能用） |
+
+几条要知道的：
+
+- **zsh 和 bash 各一份，行为一致**（有人机器上没有 zsh）。
+- 它挂在引擎自己那个项目（`bootstrap`）的环境变量块上：`./install.sh` 的第 3 步
+  （也就是 `wtool install bootstrap`）就会挂好，**重开一个 shell**（`exec $SHELL`）之后生效。
+- **内部命令不出现在候选里**（`_layer-save` / `_layer-load` 这种下划线开头的，
+  和 `--help` 的主清单、看板图例是同一个口径）。
+- 这台机器没有 sudo 时，`sudo-*` 那几个命令也不出现（和看板一个口径）。这个判定是
+  **每次按 Tab 现算的**，不用重开 shell —— 权限变了（比如刚 `sudo` 过一次），下一次 Tab 就变了。
+
 ### `wtool`（裸跑）
 
 裸跑 `wtool` 打印**五段看板**，最后是两张图说明"安装"和"发布"怎么走。
 （`wtool table` 这个名字已经删掉，敲它只会告诉你裸跑 `wtool`。）
 
-**第 1 段：每个项目能跑哪些命令**
+**第 1 段：每个项目能跑哪些命令**（下面这个例子来自一台**有 sudo** 的机器，11 列）
 
 ```
 ┌─────────────────────────┬──────┬────────┬─────────┬───────────┬────────┬─────────┬────────┬─────────┬──────────┬────────┐
@@ -213,6 +235,26 @@ wtool validate ./terminal/ripgrep
 | `publish` | `wtool publish-release` |
 | `download` | `wtool download-release` |
 | `layer` | `wtool unpack-layer` / `wtool push-layer` / `wtool pull-layer` |
+
+**不能提权的机器上，`sudo` / `sudo-un` 这两列不摆出来（9 列）**
+（没有 sudo，或者有 sudo 但要密码、而凭证已经过期），表下面的图例会写清原因和后果：
+
+```
+⚠️ 这台机器上没有 sudo → 少列了 sudo / sudo-un 两列。
+   拿到 sudo 权限之后重跑 wtool 就会自动出现（每次都会现探）。
+```
+
+判定**每次跑 `wtool` 都重新做一遍**（不缓存）：本来就是 root、`sudo` 免密、或者刚输过密码
+（凭证还在缓存里）都算"能提权"，于是 11 列 —— 权限或凭证一变（刚被加进免密 `sudo`、
+刚 `sudo` 过一次），不用重装也不用重开 shell，重跑一次就看到了。
+
+> **有 sudo 但要密码的机器**：照样 11 列 —— wtool 靠"你在不在 `sudo`/`wheel` 组"判断，
+> 不会为了探测弹密码框（真去跑 `sudo-*` 时系统会照常问密码）。特殊配置下判断不准，
+> 就用 `WTOOL_SUDO=yes` / `=never` 明确告诉它
+> 明确告诉它"这台机器有 sudo"，那两列就回来了。
+
+想明确告诉 wtool"这台机器别碰 sudo"（公司机器常用）就设 `WTOOL_SUDO=never` ——
+看板和 Tab 补全都当"没有 sudo"；它只影响 wtool 怎么判断，`sudo-*` 命令本身没被删掉。
 
 （`wtool _layer-save` / `_layer-load` 是**内部命令**：引擎构建时自己调、助手排查时用。
 它们不在图例里，也不在 `--help` 的主清单里。）
@@ -387,6 +429,11 @@ wtool sudo-bootstrap              # 所有项目的系统层
 动 `/etc` 之前会备份，`sudo-uninstall` 的时候按记录还原；apt 包按"跑前跑后的差集"记账，
 只卸这次装进来的。（旧名字 `provision` 已经删掉，敲它会报错指路。）
 
+**没有 sudo 的机器**：上面那两条命令**不要敲**（敲了会失败）。`wtool` 自己、以及所有不带
+`sudo-` 的命令都不需要 root —— 没有 sudo 也能装 wtool、装 tmux / zsh 这些；只有系统层
+要 root，那时候再找管理员。这台机器能不能提权，看板每次都会现探并据此决定列不列那两列
+（见上面「裸跑」那节）；不想让它碰 sudo 就设 `WTOOL_SUDO=never`。
+
 ### `wtool pack-release` / `wtool publish-release`
 
 **打包**（不联网，产出落在项目自己的 `__release/` 目录里）：
@@ -507,6 +554,51 @@ wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quie
 
 ## 4. 出问题了怎么办
 
+**公司机器上没有 sudo（装不了包 / 不敢碰 `sudo`）**
+
+`./install.sh` 一上来就把这台机器分成四种：本来就是 root / `sudo` 免密 / 有 `sudo` 但要密码 /
+根本没有 `sudo`，各走各的路：
+
+- **要密码**：能确认你有 sudo 时它会**问一次**，先把将要执行的命令打给你看；输密码就继续，
+  直接回车就跳过要 root 的那部分（它不会偷偷弹密码提示，也不会卡在那儿等）。
+- **根本没有 sudo**：只做不需要 root 的部分，并把"该让管理员装什么"打出来。
+- **`python3` / `git` 缺一个、又装不上**：它明确告诉你让管理员装这两个包，
+  然后**停在准备运行环境这一步**（不会装作装好了）—— 规划器要 `python3`、
+  读仓库要 `git`，绕不过去。
+
+wtool **不会为了判断去弹密码框**：靠"你在不在 `sudo`/`wheel` 组"判断，没能确认时
+它就按"没有 sudo"处理 —— 跳过要 root 的部分，把该装的命令打给你看，自己敲一遍即可。
+
+**没有 sudo 也能装 wtool 自己**（引擎 + `~/.wtool` + 软链都不需要 root），
+之后 `wtool install <项目>` / `wtool bootstrap` 装 tmux、zsh 这些照样能用；
+只有系统层 `wtool sudo-bootstrap` / `wtool sudo-install` 要 root —— 那时候再找管理员。
+看板也会少列 `sudo` / `sudo-un` 两列（见 §2 裸跑那节）；想明确告诉 wtool
+"这台机器别碰 sudo" 就设 `WTOOL_SUDO=never`。
+
+**`./install.sh` 装包时看起来卡住了**
+
+先看屏幕上有没有这行（每 5 秒一行）：
+
+```
+wtool-install:     还在装…（30 秒）  · Get:3 http://… 45.2 MB/120 MB
+```
+
+有就说明它还活着 —— 它顺手把 apt 最后一行贴出来了。以前下载几分钟屏幕上什么都没有，
+看起来像卡死；现在不会再出现那种"一片安静"。真要确认，另开一个终端 `ps` / `df` 看看。
+
+**按 Tab 补出来的是当前目录的文件名，不是 wtool 的命令**
+
+补全是引擎自己那个项目（`bootstrap`）的环境变量块挂的，**要新开的 shell 才读得到**：
+
+```bash
+exec $SHELL        # 或者干脆重开一个终端
+```
+
+还不行就确认两件事：`wtool` 这条命令本身能不能敲（敲 `wtool version` 试试，
+找不到的话看下面「shell 里 `wtool` 命令找不到」那条），以及这个 shell 是不是
+bash / zsh（补全只做了这两份）。
+能敲命令、Tab 还是补文件名的话，跑一次 `wtool install bootstrap --force` 再重开 shell。
+
 **`wtool` 报"不是 git 仓库"或"有未提交改动"**
 
 这是故意的：安装前要能确定"装的是哪个版本"。先提交，或者确实不在乎版本就加 `--force`。
@@ -531,10 +623,11 @@ wtool uninstall <项目目录>          # 一个项目
 
 **shell 里 `wtool` 命令找不到**
 
-引擎挂在 `~/.wtool/bootstrap`，靠 shell 托管块加进 `PATH`。重开一个终端，或者：
+引擎挂在 `~/.wtool/bootstrap`，靠 shell 托管块加进 `PATH`（Tab 补全也挂在同一个块上）。
+重开一个终端，或者：
 
 ```bash
-exec zsh
+exec $SHELL        # bash / zsh 都行；也可以用 exec zsh
 ```
 
 **看板显示「待产出」，但项目里明明有产物**
