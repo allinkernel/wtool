@@ -177,35 +177,49 @@ wtool validate ./terminal/ripgrep
 
 ### `wtool`（裸跑）
 
+裸跑 `wtool` 打印**五段看板**，最后是两张图说明"安装"和"发布"怎么走。
+（`wtool table` 这个名字已经删掉，敲它只会告诉你裸跑 `wtool`。）
+
+**第 1 段：每个项目能跑哪些命令**
+
 ```
-┌──────────────────────┬──────┬────────┬─────────┐
-│ 项目                 │ prio │ build  │ install │
-├──────────────────────┼──────┼────────┼─────────┤
-│ bootstrap            │ 5    │ 不支持 │ 可执行  │
-│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │
-│ shell/oh-my-zsh      │ 10   │ 不支持 │ 可执行  │
-│ shell/zsh            │ 20   │ 不支持 │ 可执行  │
-│ tools/repo           │ 40   │ 不支持 │ 可执行  │
-│ tools/android_repack │ 45   │ 不支持 │ 可执行  │
-│ tools/gerrit-gate    │ 46   │ 不支持 │ 可执行  │
-│ harness/dsh-conf     │ 48   │ 不支持 │ 可执行  │
-│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │
-│ terminal/fzf         │ 60   │ 不支持 │ 可执行  │
-│ editor/astronvim_v5  │ 70   │ 可执行 │ 待产出  │
-│ lightmind            │ 100  │ 不支持 │ 不支持  │
-└──────────────────────┴──────┴────────┴─────────┘
+┌──────────────────────┬──────┬────────┬─────────┬────────┬────────┬─────────┬──────────┬────────┐
+│ 项目                 │ prio │ build  │ install │  sudo  │  pack  │ publish │ download │ layer  │
+├──────────────────────┼──────┼────────┼─────────┼────────┼────────┼─────────┼──────────┼────────┤
+│ bootstrap            │ 5    │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │ 可执行 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ editor/astronvim_v5  │ 70   │ 可执行 │ 可执行  │ 不支持 │ 可执行 │ 可执行  │ 未发布   │ 已完成 │
+│ themes/typora/lightmind │ 100 │ 不支持 │ 不支持 │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+└──────────────────────┴──────┴────────┴─────────┴────────┴────────┴─────────┴──────────┴────────┘
 ```
 
-**只有两列能力**：`build` 和 `install`。发布和下载是全项目一样的引擎命令
-（`pack-release` / `publish-release` / `download-release` / `unpack-release`），
-不是某个项目的能力，所以不占表格的列。`wtool table` 这个名字已经删掉，敲它只会告诉你裸跑 `wtool`。
+**列名就是命令**（表下面还有一行图例）：`build`=`wtool build`、`install`=`wtool install`、
+`sudo`=`wtool sudo-install`、`pack`=`wtool pack-release`、`publish`=`wtool publish-release`、
+`download`=`wtool download-release`、`layer`=`wtool layer-save` 那五条。
 
-每格是四种状态之一（终端里带颜色）：`不支持` 红、`可执行` 黄、`待产出` 蓝、`已完成` 绿。
-`待产出` 的意思是"能力有，但项目的 `output/` 里还是空的" —— 先 `wtool build`，
-或者 `download-release` + `unpack-release`。`build` / `install` 是**你这台机器上的进度**，
-跑过才会变绿（本地发布历史不打在表里，`--verbose` 会列出来）。
+每格是五种状态之一（终端里带颜色）：
 
-加 `--verbose` 会在表下面列出每个项目的细节（装过没有、provision 跑过没有、发布过什么版本），`--summary` 只多一行汇总。不带参数的 `wtool` 是 `--verbose --summary`。
+| 格子 | 颜色 | 意思 |
+|---|---|---|
+| `不支持` | 红 | 这个项目没有这项能力 |
+| `可执行` | 黄 | 现在就能跑 |
+| `待产出` | 蓝 | 能力有，但项目的 `output/` 里还是空的 —— 先 `wtool build`，或 `download-release` + `unpack-release` |
+| `已完成` | 绿 | 跑过了（`build` / `install` / `sudo-install` / `publish` 各自记账） |
+| `未发布` | 紫 | 只在 `download` 那格出现：这个项目还没发布过（仓库里没有 `scripts/release.json`），所以没东西可下 |
+
+**第 2–5 段**分别是四张计划表：
+
+- `wtool install` 能装哪些项目、装过没、会做什么；
+- `wtool sudo-install` 能装哪些项目、跑过没、会装什么（几个系统文件、几个任务）；
+- `wtool bootstrap` 这次会装哪些、按什么顺序、谁会被跳过（需要先产出的就跳过）；
+- `wtool sudo-bootstrap` 这次会跑哪些。
+
+最后是流水线说明和两张图。**图里是纯英文**（等宽字体下中文对不齐）。
+
+`--brief` 只打第 1 段（`wtool doctor` 和 `bootstrap` 末尾用的就是它）；
+`--verbose` 再多一段"明细"（装过什么时候、产物从哪来、发布过没）；
+`--summary` 只打一行汇总。
 
 ### `wtool build` / `wtool download-release` / `wtool unpack-release`
 

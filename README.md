@@ -360,36 +360,36 @@ wtool install editor/astronvim_v5           # 装
 （`download-release` / `unpack-release` / `pack-release` / `publish-release`），
 所有项目走同一条路。
 
-**这些脚本在不在，就代表这个项目有没有这几项能力**（`install` 还有一条来源：`wtool.xml` 里声明了 `link` 或 `zshrc`/`bashrc` 也算有）。`wtool` 不带参数跑一下，会看到一张表：
+**这些脚本在不在，就代表这个项目有没有这几项能力**（`install` 还有一条来源：`wtool.xml` 里声明了 `link` 或 `zshrc`/`bashrc` 也算有）。`wtool` 不带参数跑一下，会看到一张表和四段计划：
 
 ```
-┌──────────────────────┬──────┬────────┬─────────┐
-│ 项目                 │ prio │ build  │ install │
-├──────────────────────┼──────┼────────┼─────────┤
-│ bootstrap            │ 5    │ 不支持 │ 可执行  │
-│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │
-│ shell/oh-my-zsh      │ 10   │ 不支持 │ 可执行  │
-│ shell/zsh            │ 20   │ 不支持 │ 可执行  │
-│ tools/repo           │ 40   │ 不支持 │ 可执行  │
-│ tools/android_repack │ 45   │ 不支持 │ 可执行  │
-│ tools/gerrit-gate    │ 46   │ 不支持 │ 可执行  │
-│ harness/dsh-conf     │ 48   │ 不支持 │ 可执行  │
-│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │
-│ terminal/fzf         │ 60   │ 不支持 │ 可执行  │
-│ editor/astronvim_v5  │ 70   │ 可执行 │ 可执行  │
-│ lightmind            │ 100  │ 不支持 │ 不支持  │
-└──────────────────────┴──────┴────────┴─────────┘
+┌──────────────────────┬──────┬────────┬─────────┬────────┬────────┬─────────┬──────────┬────────┐
+│ 项目                 │ prio │ build  │ install │  sudo  │  pack  │ publish │ download │ layer  │
+├──────────────────────┼──────┼────────┼─────────┼────────┼────────┼─────────┼──────────┼────────┤
+│ bootstrap            │ 5    │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │ 可执行 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+│ editor/astronvim_v5  │ 70   │ 可执行 │ 可执行  │ 不支持 │ 可执行 │ 可执行  │ 未发布   │ 已完成 │
+│ themes/typora/lightmind │ 100 │ 不支持 │ 不支持 │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
+└──────────────────────┴──────┴────────┴─────────┴────────┴────────┴─────────┴──────────┴────────┘
 ```
 
 （这是在一台**什么都没装过**的机器上跑出来的样子，所以状态列大多是"可执行"。
 你自己的机器上装过的项目会显示"已完成"。）
 
-**只有 `build` 和 `install` 两列**：发布和下载是全项目一样的引擎命令，不是某个项目的能力，
-所以表格里没有它们。
+**每一列就是一个命令**（表下面还有一行图例）：`build`=`wtool build`、`install`=`wtool install`、
+`sudo`=`wtool sudo-install`、`pack`=`wtool pack-release`、`publish`=`wtool publish-release`、
+`download`=`wtool download-release`、`layer`=`wtool layer-save` 那五条。
+项目脚本只有 `build.sh` / `install.sh` 两种（上表那两列），
+其余几列是**引擎**的命令 —— 摆出来是为了让你一眼看到"这个项目还能做什么"。
+
+表后面还有四段：`wtool install` 能装哪些、`wtool sudo-install` 能装哪些、
+`wtool bootstrap` 这次会装哪些（按顺序、谁被跳过）、`wtool sudo-bootstrap` 会跑哪些。
+再后面是两张图（安装 / 发布）。
 
 `prio`（优先级）越小越先加载，决定环境变量块的顺序 —— 引擎要在最前面，所以是 5。
 
-每一格是**四种状态之一**，终端里各有颜色：
+每一格是**五种状态之一**，终端里各有颜色：
 
 | 状态 | 颜色 | 意思 |
 |---|---|---|
@@ -397,6 +397,7 @@ wtool install editor/astronvim_v5           # 装
 | **可执行** | 黄 | 现在就能跑 |
 | **待产出** | 蓝 | 能力有，但 `output/` 里还是空的 —— 先 `wtool build`，或者 `download-release` + `unpack-release` |
 | **已完成** | 绿 | 跑过了 |
+| **未发布** | 紫 | 只在 `download` 那一格出现：这个项目还没发布过（仓库里没有 `scripts/release.json`），所以没东西可下 |
 
 `install` 那一列显示的是**你这台机器上的进度**，所以它会变：装过一个项目就从黄变绿，
 换台机器或者卸掉它又变回黄。（`build` 那列同理：编过一次就变绿。）
