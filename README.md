@@ -857,23 +857,34 @@ wtool version
 | 脚本 | 做什么 | 什么时候用 |
 |---|---|---|
 | `bootstrap/scripts/container-shell.sh` | 装系统依赖 → 装引擎 → 把你丢进 zsh（**剩下两步自己敲**：`wtool sudo-bootstrap` 再 `wtool bootstrap`） | 想马上得到一个能用的环境 |
-| `bootstrap/scripts/container-raw.sh` | **什么都不装**，只挂工作区 → 进 bash | 想从零走一遍，每一步自己决定 |
+| `bootstrap/scripts/container-raw.sh` | **什么都不装**，只挂工作区 → 进 bash；加 `--user <名字>` 则先建一个普通用户（密码 `root`、sudo 免密）再切进去 | 想从零走一遍，每一步自己决定 |
 
 `container-raw.sh` 的状态等价于"刚 `repo sync` 完"：连 `python3` 和 `git`
 都没有。这是**故意的**——装了它们 `wtool` 就能跑，可真机器刚同步完时本来
 就没有，如实反映那个状态才不会被误导。进去之后它会打一份操作对照表。
 
 ```bash
-# 从头走一遍
+# 从头走一遍（root 进去）
 docker run --rm -it --network=host \
   -v ~/self/wtool:/wtool:ro \
-  ubuntu:20.04 bash /wtool/bootstrap/scripts/container-raw.sh
+  ubuntu:24.04 bash /wtool/bootstrap/scripts/container-raw.sh
+
+# 以一个普通用户进去（推荐：真机上你就是普通用户，sudo 才用得着）
+docker run --rm -it --network=host \
+  -v ~/self/wtool:/wtool:ro \
+  ubuntu:24.04 bash /wtool/bootstrap/scripts/container-raw.sh --user mindul
 
 # 或者直接要一个装好的环境
 docker run --rm -it --network=host \
   -v ~/self/wtool:/wtool:ro \
-  ubuntu:20.04 bash /wtool/bootstrap/scripts/container-shell.sh
+  ubuntu:24.04 bash /wtool/bootstrap/scripts/container-shell.sh
 ```
+
+`--user <名字>` 做什么（顺序有意义）：先**测速挑 apt 源**（结果记在新用户的
+`~/.local/state/wtool/mirror.txt` 里，后面 `./install.sh` 直接接着用，不再测第二遍）、
+装 `sudo`（ubuntu 基础镜像里**没有**它）、建这个用户（家目录 + bash +
+**密码 `root`** + sudo 免密），最后 `su - <名字>` 切进去。不带 `--user` 时行为
+一个字没变（root 进去、什么都不装）。
 
 两个脚本进来时都会**自动探测宿主机的代理**（默认探 `127.0.0.1:7897`）并接上。这一步不能省：`docker run` 不会把你 shell 里的代理变量带进容器，不接的话容器里是"裸网"，所有下载都失败，而人很容易把它误判成"网络坏了"。这也是 `--network=host` 不能省的原因——只有在 host 网络下，容器里的 `127.0.0.1` 才是宿主自己。不想要自动探测就加 `-e WTOOL_NO_PROXY=1`，代理不在默认端口就加 `-e WTOOL_HOST_PROXY=http://127.0.0.1:端口`。
 
