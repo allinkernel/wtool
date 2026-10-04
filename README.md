@@ -313,7 +313,7 @@ apt 最后一行在做什么，它顺手贴出来了。
 
 ```bash
 wtool <TAB>            # 列子命令（install / bootstrap / pack-release …）
-wtool install <TAB>    # 列项目 id，外加 all
+wtool install <TAB>    # 列项目路径，外加 all
 wtool install --<TAB>  # 列这个命令认的开关（--dry-run / --force / --prune …）
 ```
 
@@ -762,7 +762,7 @@ Tab 补全也不提 `sudo-*`；它只影响 wtool 怎么判断，`sudo-*` 命令
 
 **某一格看不懂、想知道"为什么是这个状态"：`wtool status <项目>`。** 它把看板第 1 段
 按行摊开，每一列给你三样东西：**状态**、**对应的命令**、**依据**（这一格是从哪看出来的）。
-项目写 id 或者末段都行（`editor/astronvim_v5` 和 `astronvim_v5` 都认）：
+项目写路径或者末段都行（`editor/astronvim_v5` 和 `astronvim_v5` 都认）：
 
 ```bash
 wtool status editor/astronvim_v5
@@ -895,11 +895,28 @@ wtool status editor/astronvim_v5
 
 不过有几条命令要你告诉它**项目在哪**：`install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `validate` 认的是**项目目录**——在工作区根目录下写
-`terminal/tmux` 就行，在别的地方要写全路径。（`install` / `uninstall` 还认**项目 id**
-和末段：`wtool install terminal/tmux`、`wtool install tmux` 都行；`uninstall` 另有一条
-`--id <id>`。）`build` / `download-release` / `unpack-release` /
+`terminal/tmux` 就行，在别的地方要写全路径。（`install` / `uninstall` 还认**末段**：
+`wtool install terminal/tmux`、`wtool install tmux` 都行。**没有 `--id` 这回事** ——
+项目身份就是它的路径，见下面「改项目目录」。）`build` / `download-release` / `unpack-release` /
 `publish-release` / `status` 同样宽松，直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）
 也可以，在哪跑都认。
+
+### 2.0.1 改项目目录：用 `wtool move`，别自己 `mv`
+
+**项目的身份就是它在工作区里的路径**（没有单独的"项目 id"）。
+所以**把目录改个名 = 换了一个项目**：链接、环境变量块、`wtool` 记的账都挂在旧路径上。
+
+想改名就用这一条 —— 它一次做完"撤旧的、搬目录、按新路径装回来"：
+
+```bash
+wtool move terminal/tmux terminal/tmux2    # 旧路径 → 新路径
+wtool move terminal/tmux terminal/tmux2 --dry-run   # 只看计划，什么都不动
+```
+
+自己 `mv` 会怎样：`wtool` 记的账留在旧路径上 —— 链接变成断的、环境变量静默失效、
+下次 `install` 还会说落点被别人占着。**没走 `move` 就已经 `mv` 过**的话，
+跑一句 `wtool check`：它会把这类"旧账"一条条列出来，照着提示
+`wtool uninstall <旧路径> --no-script` 撤掉即可。
 
 ### 2.1 看总览
 
@@ -930,7 +947,7 @@ wtool uninstall terminal/tmux       # 撤销，系统回到装之前
 | 你敲 | 补出什么 |
 |---|---|
 | `wtool <TAB>` | 子命令（`install` / `bootstrap` / `pack-release` …） |
-| `wtool install <TAB>` | 项目 id（`terminal/tmux` 这种），外加 `all` |
+| `wtool install <TAB>` | 项目路径（`terminal/tmux` 这种），外加 `all` |
 | `wtool install --<TAB>` | 这个命令认的开关（`--dry-run` / `--force` / `--prune` …） |
 | 参数是路径时 | 退回补文件名（和平时一样） |
 
@@ -1077,17 +1094,17 @@ wtool doctor                        # 环境诊断（版本、系统、状态目
 wtool status                        # 不带项目：登记表 + 软链检查（登记的软链还都在吗）
 wtool status <项目>                  # 给了项目：逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate <项目目录>            # 检查某个项目的 wtool.xml 写得对不对
-wtool init <目录> [--id ID] [--priority N] [--all]   # 新建一个 wtool 项目
+wtool init <目录> [--priority N] [--all]   # 新建一个 wtool 项目
 wtool docs refresh                  # 重刷 §0.1 那张发布包一览表（= wtool docs / wtool refresh-downloads）
 wtool version
 ```
 
 **`wtool status` 两种形态**（两个都留着，按你手里有没有项目名挑）：
 
-- **不带参数** —— 快速体检：把登记过的软链逐条看一遍，缺了就报 `缺失: <路径>（项目 <id>）`，
+- **不带参数** —— 快速体检：把登记过的软链逐条看一遍，缺了就报 `缺失: <路径>（项目 <项目路径>）`，
   全在就报一句 `所有登记的软链都在（N 条）`，最后附一张登记表（项目 / 种类 / 落点）。
   典型的用法是"我是不是把什么东西删掉了"。
-- **带项目**（目录、项目 id、末段都行）—— 逐列给「状态 + 对应命令 + 依据」，
+- **带项目**（目录、项目路径、末段都行）—— 逐列给「状态 + 对应命令 + 依据」，
   用来看懂看板上某一格为什么是那个状态。
 
 **`wtool docs refresh` 什么时候用**：§0.1 那张发布包一览表是自动维护的，`publish-release`
@@ -1207,7 +1224,7 @@ docker run --rm -it --network=host \
 - `./install.sh` 装包时每 5 秒打一行 `还在装…（N 秒）· <apt 最后一行>`。容器里下载本来就慢
   （走代理时更慢），以前屏幕上几分钟没动静，人以为卡死就把容器 Ctrl-C 了 —— 有这行就说明它还活着。
 - 交给你的是**新开的 shell**（脚本最后 `exec bash -i`），所以 Tab 补全直接就能用：
-  `wtool <TAB>` 列子命令、`wtool install <TAB>` 列项目 id（见 2.2）。
+  `wtool <TAB>` 列子命令、`wtool install <TAB>` 列项目路径（见 2.2）。
 
 **看板列数取决于容器里这个用户能不能提权**：不带 `--user` 时你是 root，`--user` 建的那个
 普通用户是 **sudo 免密**，两种都算"有 sudo"，看板是 13 列；想看"没有 sudo"的 11 列，

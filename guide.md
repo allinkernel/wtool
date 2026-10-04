@@ -47,7 +47,7 @@ terminal/tmux/
 `wtool.xml` 是最小的一份声明，长这样：
 
 ```xml
-<wtool schema="1" id="terminal/tmux" priority="50">
+<wtool schema="1" priority="50">
 
   <!-- 把本目录的 tmux.conf 软链到 ~/.tmux.conf -->
   <link src="tmux.conf" dest=".tmux.conf"/>
@@ -166,8 +166,9 @@ wtool validate ./terminal/ripgrep
 | `wtool build [<项目>…]` | 跑项目的 `build.sh`，产物写进 `__output/` |
 | `wtool download-release [<项目>…]` | 照项目里提交的 `scripts/release.json`，从发布页把包下到 `__release/`（**只下载**） |
 | `wtool unpack-release <项目>…` | 校验 + 解开 `__release/` 里的包，写进 `__output/` |
-| `wtool install <项目目录\|项目 id\|all> [--prune]` | 安装（软链接 + shell 块 + 项目的 `install.sh`）；`all` = 装所有不需要你决策的项目（和 `wtool bootstrap` 同一条路）；`--prune` 顺手清掉项目里已经删掉的旧软链 |
-| `wtool uninstall <项目目录>` / `--id <项目>` | 卸载，完全还原 |
+| `wtool install <项目路径\|all> [--prune]` | 安装（软链接 + shell 块 + 项目的 `install.sh`）；`all` = 装所有不需要你决策的项目（和 `wtool bootstrap` 同一条路）；`--prune` 顺手清掉项目里已经删掉的旧软链 |
+| `wtool uninstall <项目路径>` | 卸载，完全还原。目录已经不在了也能卸（走记下的账） |
+| `wtool move <旧路径> <新路径>` | 项目**改名**（= 卸旧的 + 搬目录 + 装新的）。**改目录一定用它**，别自己 `mv` —— 项目身份就是路径 |
 | `wtool sudo-install <项目目录>` | 装系统包 / 改系统文件（不可逆，和 `install` 严格分开） |
 | `wtool sudo-uninstall <项目目录>` | 撤销 `sudo-install` |
 | `wtool pack-release <项目>…` | 打包写进项目的 `__release/`（不联网） |
@@ -193,9 +194,9 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 | 你敲 | 补出什么 |
 |---|---|
 | `wtool <TAB>` | 子命令：`install` / `bootstrap` / `pack-release` / `doctor` … |
-| `wtool install <TAB>` | 项目 id（`terminal/tmux` 这种），外加 `all`、以及它认的开关 |
+| `wtool install <TAB>` | 项目路径（`terminal/tmux` 这种），外加 `all`、以及它认的开关 |
 | `wtool install --<TAB>` | 这个命令的开关：`--dry-run` / `--force` / `--prune` … |
-| `wtool build editor/<TAB>` | 认项目的命令都会列项目 id（`build` / `unpack-release` / `push-layer` …） |
+| `wtool build editor/<TAB>` | 认项目的命令都会列项目路径（`build` / `unpack-release` / `push-layer` …） |
 | 给不出候选时 | 退回 shell 自己的文件名补全（参数是路径的情况照旧能用） |
 
 几条要知道的：
@@ -309,7 +310,7 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 `wtool status` 有**两种形态**，按你手里有没有项目名挑。
 
 **不带参数 = 登记表 + 软链检查**（一次快速体检）：把登记过的软链逐条看一遍，
-缺了就报 `缺失: <路径>（项目 <id>）`，全在就报一句条数，最后附一张登记表。
+缺了就报 `缺失: <路径>（项目 <项目路径>）`，全在就报一句条数，最后附一张登记表。
 典型的用法是"我是不是把哪个软链删掉了"：
 
 ```bash
@@ -495,8 +496,8 @@ wtool install terminal/tmux --prune      # 顺手清掉"项目里已经删掉"�
 
 ```bash
 cd <工作区目录>
-wtool uninstall terminal/tmux       # 给项目目录
-wtool uninstall --id terminal/tmux  # 给项目名：在哪个目录跑都行
+wtool uninstall terminal/tmux       # 给项目路径：在哪个目录跑都行
+wtool uninstall tmux                # 末段也行
 ```
 
 逆着 `install` 的记录来，把链接删掉、shell 块抹掉、文件还原。如果某个软链接被换成了真实文件（你自己改过），它会保留不动，不会误删你的东西。
