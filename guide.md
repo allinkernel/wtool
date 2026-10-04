@@ -177,7 +177,7 @@ wtool validate ./terminal/ripgrep
 | `wtool pull-layer <项目>…` | 从镜像仓库把层镜像拉到 `__layer/`（目标机不需要 docker） |
 | `wtool bootstrap` | 把所有项目 `install` 一遍（不做系统层），需要先产出的会跳过 |
 | `wtool sudo-bootstrap` | 所有项目的 `sudo-install` |
-| `wtool status` | 登记表 + 检查登记的软链接是否都还在 |
+| `wtool status <项目>` | 看板某一格看不懂？逐列给状态 + 对应命令 + 依据（看「裸跑」那一节后面的用法） |
 | `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool version` | 版本 |
 
@@ -208,35 +208,49 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 裸跑 `wtool` 打印**五段看板**，最后是两张图说明"安装"和"发布"怎么走。
 （`wtool table` 这个名字已经删掉，敲它只会告诉你裸跑 `wtool`。）
 
-**第 1 段：每个项目能跑哪些命令**（下面这个例子来自一台**有 sudo** 的机器，11 列）
+**第 1 段：每个项目能跑哪些命令**（下面这个例子来自一台**有 sudo** 的机器，13 列）
 
 ```
-┌─────────────────────────┬──────┬────────┬─────────┬───────────┬────────┬─────────┬────────┬─────────┬──────────┬────────┐
-│ 项目                    │ prio │ build  │ install │ uninstall │  sudo  │ sudo-un │  pack  │ publish │ download │ layer  │
-├─────────────────────────┼──────┼────────┼─────────┼───────────┼────────┼─────────┼────────┼─────────┼──────────┼────────┤
-│ bootstrap               │ 5    │ 不支持 │ 可执行  │ 未安装    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
-│ os/ubuntu               │ 5    │ 不支持 │ 不支持  │ 不支持    │ 可执行 │ 未安装  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
-│ terminal/tmux           │ 50   │ 不支持 │ 可执行  │ 未安装    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
-│ editor/astronvim_v5     │ 70   │ 可执行 │ 待产出  │ 未安装    │ 不支持 │ 不支持  │ 待产出 │ 可执行  │ 未发布   │ 可执行 │
-│ themes/typora/lightmind │ 100  │ 不支持 │ 不支持  │ 不支持    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
-└─────────────────────────┴──────┴────────┴─────────┴───────────┴────────┴─────────┴────────┴─────────┴──────────┴────────┘
+┌─────────────────────────┬──────┬────────┬─────────┬─────────┬────────┬────────┬────────┬─────────┬────────┬────────┬────────┬────────┐
+│ 项目                    │ prio │ build  │ install │   un    │  sudo  │  sudo  │  pack  │ publish │  down  │ unpack │  push  │  pull  │
+│                         │      │        │         │ install │        │  -un   │        │         │  load  │ layer  │ layer  │ layer  │
+├─────────────────────────┼──────┼────────┼─────────┼─────────┼────────┼────────┼────────┼─────────┼────────┼────────┼────────┼────────┤
+│ bootstrap               │ 5    │ 不支持 │ 可执行  │ 未安装  │ 不支持 │ 不支持 │ 可执行 │ 可执行  │ 未发布 │ 不支持 │ 不支持 │ 不支持 │
+│ os/ubuntu               │ 5    │ 不支持 │ 不支持  │ 不支持  │ 可执行 │ 未安装 │ 可执行 │ 可执行  │ 未发布 │ 不支持 │ 不支持 │ 不支持 │
+│ terminal/tmux           │ 50   │ 不支持 │ 可执行  │ 未安装  │ 不支持 │ 不支持 │ 可执行 │ 可执行  │ 未发布 │ 不支持 │ 不支持 │ 不支持 │
+│ editor/astronvim_v5     │ 70   │ 可执行 │ 可执行  │ 未安装  │ 不支持 │ 不支持 │ 可执行 │ 可执行  │ 未发布 │ 已完成 │ 可执行 │ 可执行 │
+│ themes/typora/lightmind │ 100  │ 不支持 │ 不支持  │ 不支持  │ 不支持 │ 不支持 │ 可执行 │ 可执行  │ 未发布 │ 不支持 │ 不支持 │ 不支持 │
+└─────────────────────────┴──────┴────────┴─────────┴─────────┴────────┴────────┴────────┴─────────┴────────┴────────┴────────┴────────┘
 ```
 
-**列名就是命令**（表下面还有一行图例，逐条写全，不省略）：
+**列名就是命令名，一列只对应一条命令。** 名字长的列**折两行**，每行不超过 6 个字符，
+**从上往下读就是那个命令**（优先在 `-` 处断开）：`un` + `install` = `uninstall`、
+`sudo` + `-un` = `sudo-uninstall`、`down` + `load` = `download-release`、
+`unpack` + `layer` = `unpack-layer`、`push` + `layer` = `push-layer`、
+`pull` + `layer` = `pull-layer`；`build` / `install` / `sudo` / `pack` / `publish` 还是一行。
 
-| 列名 | 命令 |
+**列名和命令的对应**（表下面还有一行图例，逐条写全，不省略）：
+
+| 列名（折起来读） | 命令 |
 |---|---|
 | `build` | `wtool build` |
 | `install` | `wtool install` |
-| `uninstall` | `wtool uninstall` |
+| `un` + `install` | `wtool uninstall` |
 | `sudo` | `wtool sudo-install` |
-| `sudo-un` | `wtool sudo-uninstall`（列头放不下全名，缩写成 `sudo-un`） |
+| `sudo` + `-un` | `wtool sudo-uninstall`（列头放不下全名，所以折成两行） |
 | `pack` | `wtool pack-release` |
 | `publish` | `wtool publish-release` |
-| `download` | `wtool download-release` |
-| `layer` | `wtool unpack-layer` / `wtool push-layer` / `wtool pull-layer` |
+| `down` + `load` | `wtool download-release` |
+| `unpack` + `layer` | `wtool unpack-layer`（`__layer/` → `__output/`，不联网、不要 docker） |
+| `push` + `layer` | `wtool push-layer`（`__layer/` → 镜像仓库） |
+| `pull` + `layer` | `wtool pull-layer`（镜像仓库 → `__layer/`） |
 
-**不能提权的机器上，`sudo` / `sudo-un` 这两列不摆出来（9 列）**
+> 三条「层」命令**各占一列**（原来挤在一列里，分不清那个「已完成」说的是哪条）。
+> 它们的「已完成」也**不是一回事**：`unpack-layer` 解过就会显示已完成（判据是
+> `__output/` 里有没有解出来的东西）；`push-layer` / `pull-layer` **推过没、拉过没
+> 本机不记账**，所以最高只到「可执行」—— 真状态要去镜像仓库看。
+
+**不能提权的机器上，`sudo` / `sudo-uninstall` 这两列不摆出来（11 列）**
 （没有 sudo，或者有 sudo 但要密码、而凭证已经过期），表下面的图例会写清原因和后果：
 
 ```
@@ -245,10 +259,10 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 ```
 
 判定**每次跑 `wtool` 都重新做一遍**（不缓存）：本来就是 root、`sudo` 免密、或者刚输过密码
-（凭证还在缓存里）都算"能提权"，于是 11 列 —— 权限或凭证一变（刚被加进免密 `sudo`、
+（凭证还在缓存里）都算"能提权"，于是 13 列 —— 权限或凭证一变（刚被加进免密 `sudo`、
 刚 `sudo` 过一次），不用重装也不用重开 shell，重跑一次就看到了。
 
-> **有 sudo 但要密码的机器**：照样 11 列 —— wtool 靠"你在不在 `sudo`/`wheel` 组"判断，
+> **有 sudo 但要密码的机器**：照样 13 列 —— wtool 靠"你在不在 `sudo`/`wheel` 组"判断，
 > 不会为了探测弹密码框（真去跑 `sudo-*` 时系统会照常问密码）。特殊配置下判断不准，
 > 就用 `WTOOL_SUDO=yes` / `=never` 明确告诉它
 > 明确告诉它"这台机器有 sudo"，那两列就回来了。
@@ -266,11 +280,11 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 | `不支持` | 红 | 这个项目没有这项能力 |
 | `可执行` | 黄 | 现在就能跑 |
 | `待产出` | 蓝 | 能力有，但项目的 `__output/` 里还是空的 —— 先 `wtool build`，或 `download-release` + `unpack-release` |
-| `已完成` | 绿 | 跑过了（`build` / `install` / `sudo-install` / `publish` 各自记账） |
+| `已完成` | 绿 | 跑过了（`build` / `install` / `sudo-install` / `publish` 各自记账；`unpack-layer` 不同 —— 它不记账，解过就会在 `__output/` 里留下东西，按那个判） |
 | `未发布` | 紫 | 只在 `download` 那格出现：这个项目还没发布过（仓库里没有 `scripts/release.json`），所以没东西可下 |
-| `未安装` | 青 | 只在 `uninstall` / `sudo-un` 那两格出现：**现在没什么可撤的**（还没装）。和 `不支持` 不是一回事 —— 后者是"这个项目根本没这项能力" |
+| `未安装` | 青 | 只在 `uninstall` / `sudo-uninstall` 那两格出现：**现在没什么可撤的**（还没装）。和 `不支持` 不是一回事 —— 后者是"这个项目根本没这项能力" |
 
-`install` 和 `uninstall` 是成对的两列，`sudo` 和 `sudo-un` 也是这样：
+`install` 和 `uninstall` 是成对的两列，`sudo` 和 `sudo-uninstall` 也是这样：
 **装之前** `install`=可执行、`uninstall`=未安装；**装之后** `install`=已完成、`uninstall`=可执行。
 
 **第 2–5 段**分别是四张计划表：
@@ -285,6 +299,56 @@ wtool 生效之后，`wtool` 后面按 Tab 列的是 **wtool 自己的候选**�
 `--brief` 只打第 1 段（`wtool doctor` 和 `bootstrap` 末尾用的就是它）；
 `--verbose` 再多一段"明细"（装过什么时候、产物从哪来、发布过没）；
 `--summary` 只打一行汇总。
+
+### 某一格看不懂 / 想知道为什么：`wtool status <项目>`
+
+看板第 1 段是"一眼看全"，它不解释**为什么**。想知道某一格是怎么算出来的、
+接下来该敲哪条命令，就用 `wtool status <项目>`：它把那一行**逐列摊开**，
+每列给三样东西 —— **状态**（和看板里那一格一模一样）、**对应的命令**、**依据**
+（这一格是从哪看出来的）。项目写全名或者末段都行：
+
+```bash
+wtool status editor/astronvim_v5
+wtool status astronvim_v5          # 只写末段也行（后缀匹配）
+```
+
+```
+项目 editor/astronvim_v5（prio 70）  /home/<你>/self/wtool/editor/astronvim_v5
+  一列一个命令；状态就是看板里那一格，依据 = 「这一格是怎么看出来的」。
+
+┌────────────────┬────────┬────────────────────────┬────────────────────────────────────────────────────────────────────────────────┐
+│ 列             │  状态  │ 对应命令               │ 依据（这一格是怎么看出来的）                                                   │
+├────────────────┼────────┼────────────────────────┼────────────────────────────────────────────────────────────────────────────────┤
+│ build          │ 可执行 │ wtool build            │ 有 scripts/build.sh；__output/ 里有 1 项                                       │
+│ install        │ 可执行 │ wtool install          │ 有 scripts/install.sh；安装记录 0 条                                           │
+│ uninstall      │ 未安装 │ wtool uninstall        │ 安装记录 0 条 → 现在没什么可撤的                                               │
+│ sudo           │ 不支持 │ wtool sudo-install     │ wtool.xml 里没有系统层声明（sysfile/source/task）                              │
+│ sudo-uninstall │ 不支持 │ wtool sudo-uninstall   │ 已装系统文件 0 个                                                              │
+│ pack           │ 可执行 │ wtool pack-release     │ __output/ 里有 1 项                                                            │
+│ publish        │ 可执行 │ wtool publish-release  │ 发布记录 0 条（还没发过）                                                      │
+│ download       │ 未发布 │ wtool download-release │ 仓库里没有 scripts/release.json → 还没发布过，没东西可下                       │
+│ unpack-layer   │ 已完成 │ wtool unpack-layer     │ build/layers.tsv 在；__layer/ 有 1 个 target；解出来 10 份 OWNED.tsv           │
+│ push-layer     │ 可执行 │ wtool push-layer       │ build/layers.tsv 在；__layer/ 有 1 个 target（推没推过本机不记，去镜像仓库看） │
+│ pull-layer     │ 可执行 │ wtool pull-layer       │ build/layers.tsv 在 → 可以从镜像仓库拉（拉下来会覆盖 __layer/）                │
+└────────────────┴────────┴────────────────────────┴────────────────────────────────────────────────────────────────────────────────┘
+
+  · 想知道某条命令**到底会做什么**：wtool <命令> editor/astronvim_v5 --dry-run（不动手，只出计划）
+  · 状态只有六种：不支持 / 可执行 / 待产出 / 已完成 / 未发布 / 未安装（和看板同一套）
+  · push-layer / pull-layer 的「推过没、拉过没」本机**没有记录**（那两条命令不写 journal）——
+    本机只能告诉你「能不能推」；真状态去镜像仓库看。
+```
+
+几条要知道的：
+
+- **它只看不动**：不写状态、不碰你的 `$HOME`，随时可以跑。
+- 依据都是**磁盘上查得到的事实**：有没有 `scripts/build.sh`、`__output/` 里有几项、
+  安装记录几条、有没有 `scripts/release.json`、`__layer/` 里有几个目标、
+  解出来几份 `OWNED.tsv`……
+- **`push-layer` / `pull-layer` 的"推过没、拉过没"，本机没有记录** ——
+  这两条命令不写日志。本机只能告诉你"能不能推"（可执行）；真状态要去镜像仓库看。
+  同理，`unpack-layer` 的"已完成"不是记账记出来的，是看 `__output/` 里有没有解出来的东西。
+- 想知道某条命令**到底会做什么**，给它加 `--dry-run`：
+  `wtool build editor/astronvim_v5 --dry-run`（只出计划、不动手）。
 
 ### `wtool build` / `wtool download-release` / `wtool unpack-release`
 
@@ -385,8 +449,8 @@ wtool install terminal/tmux --prune      # 顺手清掉"项目里已经删掉"�
 > 以及已经被别的项目接手的落点，它都不碰。平时不用带这个开关。
 
 `install` 要的是一个**项目目录**：在工作区根目录下写相对路径 `terminal/tmux`，
-在别的地方就写全路径。（`build` / `download-release` / `unpack-release` / `publish-release`
-不一样，它们认项目名，在哪个目录跑都行。）
+在别的地方就写全路径。（`build` / `download-release` / `unpack-release` / `publish-release` /
+`status` 不一样，它们认项目名 —— 连末段 `tmux` 都行，在哪个目录跑都行。）
 
 顺序是固定的：
 
@@ -509,7 +573,7 @@ wtool bootstrap --force            # 目录有未提交改动也照装
 ### 其它
 
 ```bash
-wtool status               # 登记表 + 检查那些软链接是否都还在
+wtool status <项目>        # 逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate ./terminal/tmux
 wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quiet)" 立刻在当前 shell 生效
 ```
@@ -572,7 +636,7 @@ wtool **不会为了判断去弹密码框**：靠"你在不在 `sudo`/`wheel` �
 **没有 sudo 也能装 wtool 自己**（引擎 + `~/.wtool` + 软链都不需要 root），
 之后 `wtool install <项目>` / `wtool bootstrap` 装 tmux、zsh 这些照样能用；
 只有系统层 `wtool sudo-bootstrap` / `wtool sudo-install` 要 root —— 那时候再找管理员。
-看板也会少列 `sudo` / `sudo-un` 两列（见 §2 裸跑那节）；想明确告诉 wtool
+看板也会少列 `sudo` / `sudo-uninstall` 两列（见 §2 裸跑那节）；想明确告诉 wtool
 "这台机器别碰 sudo" 就设 `WTOOL_SUDO=never`。
 
 **`./install.sh` 装包时看起来卡住了**
@@ -607,7 +671,7 @@ bash / zsh（补全只做了这两份）。
 
 ```bash
 cd <工作区目录>
-wtool status                       # 看哪些登记的链接不见了
+wtool check                        # 看哪些登记的链接不见了（声明/日志/磁盘对比）
 wtool install <项目目录> --force    # 重新装一遍
 ```
 
@@ -651,5 +715,5 @@ mv layer __layer     # 老的层仓库
 
 ```bash
 wtool doctor                       # 环境、路径、状态目录、编译安装前缀
-wtool status                       # 登记的东西是不是都还在（含每条软链的目标）
+wtool check                        # 登记的东西是不是都还在（声明/日志/磁盘对比，含软链目标）
 ```
