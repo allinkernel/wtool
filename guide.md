@@ -37,7 +37,7 @@ terminal/tmux/
 ├── tmux.conf      实际的配置文件
 ├── env.zsh        需要在 shell 里生效的环境变量（可选）
 └── scripts/       通用机制表达不了的动作，**只有两种**（可选）
-    ├── build.sh     需要自己产出时（产物写进 output/）
+    ├── build.sh     需要自己产出时（产物写进 __output/）
     └── install.sh   有自定义安装步骤时
 ```
 
@@ -122,7 +122,10 @@ wtool init ./editor/foo --all                     # 两个都要
 （`--with-download` / `--with-publish` **已经取消**：下载和发布不用项目写脚本，
 敲了会报错告诉你现在该用什么。项目脚本只剩 `build.sh` / `install.sh` 两种。）
 
-**不需要的脚本就别要。** `wtool` 的表格里那几列是靠脚本在不在点亮的，放一个空壳进去，等于在表格里撒谎——别人看到那格写着「可执行」，照着做却发现什么都没发生。
+**不需要的脚本就别要。** 看板里 `build` / `install` 那两列，就是靠项目里
+`scripts/build.sh` / `scripts/install.sh` 在不在点亮的（其余几列是**引擎**自己的命令，
+和项目脚本无关）。放一个空壳进去，等于在表格里撒谎——别人看到那格写着「可执行」，
+照着做却发现什么都没发生。
 
 生成之后，把 `wtool.xml` 填好，然后校验一下：
 
@@ -160,15 +163,18 @@ wtool validate ./terminal/ripgrep
 | `wtool` | 不带参数：打印项目总览表 |
 | `wtool doctor` | 总览表 + 环境诊断（`--quiet` 只输出环境变量的 export 行） |
 | `wtool init <目录>` | 新建项目，生成模板 |
-| `wtool build [<项目>…]` | 跑项目的 `build.sh`，产物写进 `output/` |
-| `wtool download-release [<项目>…]` | 照项目里提交的 `scripts/release.json`，从发布页把包下到 `release/`（**只下载**） |
-| `wtool unpack-release <项目>…` | 校验 + 解开 `release/` 里的包，写进 `output/` |
+| `wtool build [<项目>…]` | 跑项目的 `build.sh`，产物写进 `__output/` |
+| `wtool download-release [<项目>…]` | 照项目里提交的 `scripts/release.json`，从发布页把包下到 `__release/`（**只下载**） |
+| `wtool unpack-release <项目>…` | 校验 + 解开 `__release/` 里的包，写进 `__output/` |
 | `wtool install <项目目录\|项目 id\|all> [--prune]` | 安装（软链接 + shell 块 + 项目的 `install.sh`）；`all` = 装所有不需要你决策的项目（和 `wtool bootstrap` 同一条路）；`--prune` 顺手清掉项目里已经删掉的旧软链 |
 | `wtool uninstall <项目目录>` / `--id <项目>` | 卸载，完全还原 |
 | `wtool sudo-install <项目目录>` | 装系统包 / 改系统文件（不可逆，和 `install` 严格分开） |
 | `wtool sudo-uninstall <项目目录>` | 撤销 `sudo-install` |
-| `wtool pack-release <项目>…` | 打包写进项目的 `release/`（不联网） |
-| `wtool publish-release [<项目>…]` | 把 `release/` 里的东西传到 GitHub Release（**只上传**） |
+| `wtool pack-release <项目>…` | 打包写进项目的 `__release/`（不联网） |
+| `wtool publish-release [<项目>…]` | 把 `__release/` 里的东西传到 GitHub Release（**只上传**） |
+| `wtool unpack-layer <项目>` | 把 `__layer/` 里的层镜像解成安装产物，写进 `__output/`（不联网、不要 docker） |
+| `wtool push-layer <项目>…` | 把 `__layer/` 里的层镜像推到镜像仓库（本机要 docker） |
+| `wtool pull-layer <项目>…` | 从镜像仓库把层镜像拉到 `__layer/`（目标机不需要 docker） |
 | `wtool bootstrap` | 把所有项目 `install` 一遍（不做系统层），需要先产出的会跳过 |
 | `wtool sudo-bootstrap` | 所有项目的 `sudo-install` |
 | `wtool status` | 登记表 + 检查登记的软链接是否都还在 |
@@ -183,30 +189,47 @@ wtool validate ./terminal/ripgrep
 **第 1 段：每个项目能跑哪些命令**
 
 ```
-┌──────────────────────┬──────┬────────┬─────────┬────────┬────────┬─────────┬──────────┬────────┐
-│ 项目                 │ prio │ build  │ install │  sudo  │  pack  │ publish │ download │ layer  │
-├──────────────────────┼──────┼────────┼─────────┼────────┼────────┼─────────┼──────────┼────────┤
-│ bootstrap            │ 5    │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
-│ os/ubuntu            │ 5    │ 不支持 │ 不支持  │ 可执行 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
-│ terminal/tmux        │ 50   │ 不支持 │ 可执行  │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
-│ editor/astronvim_v5  │ 70   │ 可执行 │ 可执行  │ 不支持 │ 可执行 │ 可执行  │ 未发布   │ 已完成 │
-│ themes/typora/lightmind │ 100 │ 不支持 │ 不支持 │ 不支持 │ 可执行 │ 已完成  │ 未发布   │ 不支持 │
-└──────────────────────┴──────┴────────┴─────────┴────────┴────────┴─────────┴──────────┴────────┘
+┌─────────────────────────┬──────┬────────┬─────────┬───────────┬────────┬─────────┬────────┬─────────┬──────────┬────────┐
+│ 项目                    │ prio │ build  │ install │ uninstall │  sudo  │ sudo-un │  pack  │ publish │ download │ layer  │
+├─────────────────────────┼──────┼────────┼─────────┼───────────┼────────┼─────────┼────────┼─────────┼──────────┼────────┤
+│ bootstrap               │ 5    │ 不支持 │ 可执行  │ 未安装    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ os/ubuntu               │ 5    │ 不支持 │ 不支持  │ 不支持    │ 可执行 │ 未安装  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ terminal/tmux           │ 50   │ 不支持 │ 可执行  │ 未安装    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+│ editor/astronvim_v5     │ 70   │ 可执行 │ 待产出  │ 未安装    │ 不支持 │ 不支持  │ 待产出 │ 可执行  │ 未发布   │ 可执行 │
+│ themes/typora/lightmind │ 100  │ 不支持 │ 不支持  │ 不支持    │ 不支持 │ 不支持  │ 可执行 │ 可执行  │ 未发布   │ 不支持 │
+└─────────────────────────┴──────┴────────┴─────────┴───────────┴────────┴─────────┴────────┴─────────┴──────────┴────────┘
 ```
 
-**列名就是命令**（表下面还有一行图例）：`build`=`wtool build`、`install`=`wtool install`、
-`sudo`=`wtool sudo-install`、`pack`=`wtool pack-release`、`publish`=`wtool publish-release`、
-`download`=`wtool download-release`、`layer`=`wtool layer-save` 那五条。
+**列名就是命令**（表下面还有一行图例，逐条写全，不省略）：
 
-每格是五种状态之一（终端里带颜色）：
+| 列名 | 命令 |
+|---|---|
+| `build` | `wtool build` |
+| `install` | `wtool install` |
+| `uninstall` | `wtool uninstall` |
+| `sudo` | `wtool sudo-install` |
+| `sudo-un` | `wtool sudo-uninstall`（列头放不下全名，缩写成 `sudo-un`） |
+| `pack` | `wtool pack-release` |
+| `publish` | `wtool publish-release` |
+| `download` | `wtool download-release` |
+| `layer` | `wtool unpack-layer` / `wtool push-layer` / `wtool pull-layer` |
+
+（`wtool _layer-save` / `_layer-load` 是**内部命令**：引擎构建时自己调、助手排查时用。
+它们不在图例里，也不在 `--help` 的主清单里。）
+
+每格是六种状态之一（终端里带颜色）：
 
 | 格子 | 颜色 | 意思 |
 |---|---|---|
 | `不支持` | 红 | 这个项目没有这项能力 |
 | `可执行` | 黄 | 现在就能跑 |
-| `待产出` | 蓝 | 能力有，但项目的 `output/` 里还是空的 —— 先 `wtool build`，或 `download-release` + `unpack-release` |
+| `待产出` | 蓝 | 能力有，但项目的 `__output/` 里还是空的 —— 先 `wtool build`，或 `download-release` + `unpack-release` |
 | `已完成` | 绿 | 跑过了（`build` / `install` / `sudo-install` / `publish` 各自记账） |
 | `未发布` | 紫 | 只在 `download` 那格出现：这个项目还没发布过（仓库里没有 `scripts/release.json`），所以没东西可下 |
+| `未安装` | 青 | 只在 `uninstall` / `sudo-un` 那两格出现：**现在没什么可撤的**（还没装）。和 `不支持` 不是一回事 —— 后者是"这个项目根本没这项能力" |
+
+`install` 和 `uninstall` 是成对的两列，`sudo` 和 `sudo-un` 也是这样：
+**装之前** `install`=可执行、`uninstall`=未安装；**装之后** `install`=已完成、`uninstall`=可执行。
 
 **第 2–5 段**分别是四张计划表：
 
@@ -229,12 +252,12 @@ wtool build editor/astronvim_v5
 wtool build astronvim_v5 --dry-run
 
 wtool download-release            # 列出哪些项目有现成的包可下（提交了 scripts/release.json）
-wtool download-release editor/astronvim_v5   # 下到项目的 release/（只下载，逐个校验）
-wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 output/
+wtool download-release editor/astronvim_v5   # 下到项目的 __release/（只下载，逐个校验）
+wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 __output/
 ```
 
 `build` 只做一件事：找到项目的 `build.sh` 然后跑它 —— 编什么全由脚本决定，
-**产物要落在项目的 `output/` 里**。
+**产物要落在项目的 `__output/` 里**。
 
 不过"要不要起容器"这件事是**声明**的，不是脚本里偷偷判断的：项目在 `wtool.xml` 里写
 `<build kind="docker"/>`（每个发行版一个容器分层编）或 `<build kind="local"/>`
@@ -245,7 +268,7 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 ou
   这正是"机器太弱就下现成的包"那条路 —— 不用你自己先判断。
 - 项目声明了机器门槛（几个核、多少内存、多少磁盘），不够也一样拒绝；
   确定要硬上就加 `--force`（**没有 docker 是 `--force` 也编不了的**）。
-- 同一个 `<build kind>` 还决定 `output/` 里有没有"每个发行版一格"那一层，
+- 同一个 `<build kind>` 还决定 `__output/` 里有没有"每个发行版一格"那一层，
   所以同一个项目的两种装法（自己编 / 下现成的）产出的目录形状一定对得上。
 
 拒绝时 `wtool build` 的退出码**不是 0** —— 什么也没干却报成功，最容易骗过自动化的调用方。
@@ -253,14 +276,14 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 ou
 **要容器的那种项目，容器是 `wtool` 起的**：项目只写"哪个发行版用哪个基础镜像"和
 "每一层装什么"，起容器、提交镜像、把每一层导出成安装产物都由引擎做。好处是
 **可以断点续跑** —— 重跑 `wtool build` 不会重编已经编好的层，连 docker 里的镜像被清掉了
-也能从项目自己的 `layer/` 目录装回来。只想编一个发行版就加 `--target=ubuntu_22.04`，
+也能从项目自己的 `__layer/` 目录装回来。只想编一个发行版就加 `--target=ubuntu_22.04`，
 只想看它打算干什么就加 `--dry-run`。层之间会**按依赖并行**：父层编完，挂在它下面的层
 就可以同时开工（默认同时 2 个，`--jobs=N` 调；`$WTOOL_LAYER_JOBS` 也行）。
 
 `download-release` 只做一件事：照项目里**提交在仓库里**的 `scripts/release.json`
-把该下的文件下到 `release/`，逐个校验校验值；已经下好的（校验值对得上）会跳过，
+把该下的文件下到 `__release/`，逐个校验校验值；已经下好的（校验值对得上）会跳过，
 所以中断了重跑不会重下。`unpack-release` 再照包自带的 `dist.json` 校验每一卷、
-按顺序拼起来、解到 `output/`。**这两条都不需要项目写脚本。**
+按顺序拼起来、解到 `__output/`。**这两条都不需要项目写脚本。**
 
 **两条路（自己编 / 下载解开）产出落在完全相同的路径**，所以 `build + install` 和
 `download-release + unpack-release + install` 结果一样，装的时候不需要知道东西是哪来的。
@@ -273,6 +296,34 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 ou
 - 项目脚本拿到的 stdin 是 `/dev/null`——不要写交互式提问，没人应答
 
 构建是很慢的一步，但只有需要的项目才有。
+
+### `wtool unpack-layer` / `wtool push-layer` / `wtool pull-layer`
+
+**只有容器构建的项目才有"层"**（项目声明了 `<build kind="docker"/>`，比如 Neovim 那套）。
+`wtool build` 编出来的层镜像是**真 docker 镜像**，住在项目自己的 `__layer/<目标系统>/` 里
+（标准镜像布局，同一份内容只存一次）。围绕它有三条命令：
+
+```bash
+wtool unpack-layer editor/astronvim_v5            # __layer/ → __output/（安装产物）
+wtool unpack-layer editor/astronvim_v5 --layer=main --target=ubuntu_22.04
+wtool push-layer   editor/astronvim_v5            # __layer/ → 镜像仓库（本机要 docker）
+wtool pull-layer   editor/astronvim_v5            # 镜像仓库 → __layer/（目标机不需要 docker）
+```
+
+- `unpack-layer` 把 `__layer/` 里那一层的顶层文件解成**安装产物**，写进
+  `__output/<目标系统>/<层>/`。它**不联网、也不要 docker** —— 直接读镜像里的文件。
+  所以一台没有 docker 的机器也能装：`pull-layer` + `unpack-layer` + `install`。
+- `push-layer` / `pull-layer` 走的是**镜像仓库**这条通道（第二条发布通道）。
+  运的东西和 GitHub Release 那条（`pack-release` / `publish-release`）是同一份，
+  只是取用更快。`--registry=<前缀>` 给镜像仓库地址；不给就读环境变量
+  `$WTOOL_LAYER_REGISTRY`，两个都没有它会直接报错，不猜。
+- 和 `download-release` 一样，**只搬运、不替你解包**：`pull-layer` 拉完还要
+  `unpack-layer` 才变成能 `install` 的产物。
+
+> **内部命令**：`wtool _layer-save`（docker 里的镜像 → `__layer/`）和
+> `wtool _layer-load`（`__layer/` → docker）是**引擎构建时自己调**的零件，
+> 用户用不到，所以不在 `--help` 的主清单和看板里。老名字 `layer-save` / `layer-load`
+> 还能敲，但会先打一句"这是内部命令"。
 
 ### `wtool install`
 
@@ -299,7 +350,7 @@ wtool install terminal/tmux --prune      # 顺手清掉"项目里已经删掉"�
 
 1. 检查项目目录是不是干净的（这是为了记清楚"装的是哪个版本"）
 2. **引擎基建**：建中转链接（`~/.wtool/wtool-work-dir/links/<项目 ID>`）+ 写这个项目的 env 块
-3. 如果项目有 `install.sh`，**跑它** —— 它把 `output/` 里的东西铺进 `~/.wtool/`
+3. 如果项目有 `install.sh`，**跑它** —— 它把 `__output/` 里的东西铺进 `~/.wtool/`
 4. 按 `wtool.xml` 在 `$HOME` 里建软链，最后把各项目的 env 块汇总成一个文件
 
 ⚠️ **第 3 步在第 4 步之前，不能反**：第 4 步建的软链指向的正是第 3 步刚铺下的实体，
@@ -338,13 +389,13 @@ wtool sudo-bootstrap              # 所有项目的系统层
 
 ### `wtool pack-release` / `wtool publish-release`
 
-**打包**（不联网，产出落在项目自己的 `release/` 目录里）：
+**打包**（不联网，产出落在项目自己的 `__release/` 目录里）：
 
 ```bash
 wtool pack-release editor/astronvim_v5
 ```
 
-出来的是一对包——**源码包**（整个项目）和**产物包**（`output/` 里的东西），
+出来的是一对包——**源码包**（整个项目）和**产物包**（`__output/` 里的东西），
 各配一个校验文件；大项目的产物包会切成若干分卷，外加一份 `dist.json` 说明每一卷。
 同时写一份给人看的下载页 `docs/download.md`。
 
@@ -356,10 +407,10 @@ wtool publish-release terminal/tmux         # 只发一个
 wtool publish-release tmux                  # 项目 ID 的末段也行
 wtool publish-release --dry-run
 wtool publish-release --tag=v1.0            # 指定 tag（默认按日期）
-wtool publish-release terminal/tmux --out=/tmp/pkg   # 发布完把 release/ 里的产物另拷一份到 /tmp/pkg
+wtool publish-release terminal/tmux --out=/tmp/pkg   # 发布完把 __release/ 里的产物另拷一份到 /tmp/pkg
 ```
 
-它**只上传 `release/` 里已有的东西**：不打包、也不再调项目脚本 ——
+它**只上传 `__release/` 里已有的东西**：不打包、也不再调项目脚本 ——
 要发新版本就先 `wtool pack-release`。传完之后写一份 `scripts/release.json`
 （这一版发了什么、每个文件的校验值是多少），**记得把它提交进仓库**：
 别人 `wtool download-release` 时就是照它下的。
@@ -396,7 +447,7 @@ wtool bootstrap --force            # 目录有未提交改动也照装
 `wtool sudo-bootstrap`）。
 
 **它不替你决定"自己编还是下现成的"。** 需要先产出东西的项目（有 `build.sh` 而
-`output/` 还是空的）会被跳过，并在最后把该跑的命令列出来：
+`__output/` 还是空的）会被跳过，并在最后把该跑的命令列出来：
 `wtool build <项目>`，或者 `wtool download-release <项目>` + `wtool unpack-release <项目>`。
 
 **第一次装一台新机器，用这条命令就够了。**
@@ -485,6 +536,23 @@ wtool uninstall <项目目录>          # 一个项目
 ```bash
 exec zsh
 ```
+
+**看板显示「待产出」，但项目里明明有产物**
+
+多半是**老工作区里的目录名还没改**：`__output/` / `__release/` / `__layer/` 是后来的名字，
+老的 `output/` / `release/` / `layer/` 不会被自动搬。
+
+```bash
+cd <项目目录>
+wtool check          # 认得出旧目录时，它会直接把该敲的 mv 打出来（只提示，不自动搬）
+mv output __output   # 老的构建产出
+mv release __release # 老的打包产出
+mv layer __layer     # 老的层仓库
+```
+
+（`wtool check` 认四种旧名字：上一版的 `output/`、`layer/`，以及更早的构建产出 `release/`、
+打包产出 `publish/` —— 该敲的 `mv` 它都打给你，但**绝不自动搬**：目录名是你的决定，
+而且可能有命令正在往里写。新名字已经在的时候它不会再喊。）
 
 **想看看 `wtool` 到底把东西放哪了**
 

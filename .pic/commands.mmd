@@ -1,4 +1,4 @@
-%% 命令与 output/ release/ 的关系 —— wtool-base/README.md §1.3 用
+%% 命令与 __output/ __release/ 的关系 —— wtool-base/README.md §1.3 用
 %% 改完跑 .pic/render.sh 重新生成 commands.png
 flowchart LR
     SRC["源码 + scripts/"]
@@ -8,8 +8,8 @@ flowchart LR
 
     subgraph PROJ["项目目录（两个都进 .gitignore）"]
         direction LR
-        REL["output/系统_版本/<br/>构建产物（一层一个目录）"]
-        PUB["release/<br/>分卷 + dist.json + hash"]
+        REL["__output/系统_版本/<br/>构建产物（一层一个目录）"]
+        PUB["__release/<br/>分卷 + dist.json + hash"]
     end
 
     SRC -->|"wtool build"| REL

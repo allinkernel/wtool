@@ -7,9 +7,9 @@ README.md 和 guide.md 里有几处【图片占位】，需要人工截图后放
 
 | 文件 | 文件名 | 截什么 |
 |---|---|---|
-| README.md | `table.png` | `wtool` 的输出（带颜色，能看出 不支持=红 / 可执行=黄 / 待构建下载=蓝 / 已完成=绿 这四种状态的区别） |
+| README.md | `table.png` | `wtool` 的输出（带颜色，终端 120 列以上：这张表有 11 列，能看出 不支持=红 / 可执行=黄 / 待产出=蓝 / 已完成=绿 / 未发布=紫 / 未安装=青 这六种状态的区别） |
 | README.md | `install.png` | `wtool bootstrap` 的过程输出 |
-| guide.md | `bootstrap.png` | `wtool bootstrap --install-only` 的输出 |
+| guide.md | `bootstrap.png` | `wtool bootstrap` 的输出（`--install-only` 已经删掉，bootstrap 现在就是 install-only） |
 
 截图存成 PNG 放在本目录，然后把文档里的 `【图片占位】` 四个字删掉即可
 （`![...](.pic/xxx.png)` 那部分已经写好了）。
@@ -25,8 +25,8 @@ Typora 能看 PNG，harness 右边栏那个 markdown 预览器两者都不认（
 
 | 图 | 用在哪 | 画什么 |
 |---|---|---|
-| `layers.png` | README §1.4 | 三层路径：`output/` → `~/.wtool/` → `$HOME`，命令标在箭头上 |
-| `commands.png` | README §1.3 | 每条命令与 `output/`、`release/` 的关系（一条闭环） |
+| `layers.png` | README §1.4 | 三层路径：`__output/` → `~/.wtool/` → `$HOME`，命令标在箭头上 |
+| `commands.png` | README §1.3 | 每条命令与 `__output/`、`__release/` 的关系（一条闭环） |
 
 改图就改 `.mmd`，然后：
 
