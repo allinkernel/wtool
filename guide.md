@@ -320,9 +320,9 @@ wtool status
 ```
 wtool: 所有登记的软链都在（2 条）
 
-PROJECT      KIND     DEST
-terminal/tmux file     /home/<你>/.tmux.conf
-tools/repo    dir      /home/<你>/.wtool/wtool-work-dir/links/tools/repo
+PROJECT                  KIND     DEST
+terminal/tmux            file     /home/<你>/.tmux.conf
+tools/git-repo-sh-tools  dir      /home/<你>/.wtool/wtool-work-dir/links/tools/git-repo-sh-tools
 ```
 
 > 它查的是**登记过的**那些软链（`wtool install` 记下来的账），不扫整个 `$HOME` ——
@@ -691,7 +691,7 @@ wtool kill-self-forever             # 要逐字输入 KILL-SELF-FOREVER 才动�
 | `shell/zsh` | [allinkernel/wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 配置 |
 | `terminal/tmux` | [allinkernel/wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置与状态脚本 |
 | `terminal/fzf` | [allinkernel/wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 预编译二进制 |
-| `tools/repo` | [allinkernel/wtool-repo](https://github.com/allinkernel/wtool-repo) | repo 工具 |
+| `tools/git-repo-sh-tools` | [allinkernel/wtool-repo](https://github.com/allinkernel/wtool-repo) | repo 工具（2026-10-04 由 `tools/repo` 改名；GitHub 仓库名没变） |
 | `tools/android_repack` | [allinkernel/wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像解包 / 改包 / 重签 |
 | `tools/gerrit-gate` | [allinkernel/wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | docker 里跑一台 Gerrit 的检视闸门。**已废弃**（改成"改动只提交到 `ds_dev`、人来合"，见工作区 `harness/docs/adr/0019`），实物留着可恢复 |
 | `tools/dsh-remote` | [allinkernel/wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 手机远程接管家里的会话（阿里云 Caddy + SSH 反向隧道 + 通知） |
