@@ -182,7 +182,7 @@ wtool validate ./terminal/ripgrep
 | `wtool check [<项目>]` | 声明 / 日志 / 磁盘三者对比，**只报不改** |
 | `wtool repair [<项目>\|all]` | 修 `check` 报出来的（**只重建、不删除**，也不跑项目脚本） |
 | `wtool kill-self-forever` | 删掉 wtool 的一切痕迹（**含状态记录**），删之前要你逐字确认 |
-| `wtool docs refresh` | 重刷 README 第 2 节那张"没有 `git clone` 怎么装"的下载表（`wtool docs`、`wtool refresh-downloads` 同义） |
+| `wtool docs refresh` | 重刷 README §0.1 那张发布包一览表（`wtool docs`、`wtool refresh-downloads` 同义） |
 | `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool version` | 版本 |
 
@@ -565,7 +565,7 @@ wtool/terminal/tmux/wtool.xml
 ...
 ```
 
-所以不管你的工作区目录叫什么名字，解压出来的路径结构都是一样的——下载、解开、就得到一个能直接用的工作区。这就是 [README](README.md) 第 2 节那个"没有 git clone 时怎么装"能成立的原因。
+所以不管你的工作区目录叫什么名字，解压出来的路径结构都是一样的——下载、解开、就得到一个能直接用的工作区。这就是 [README](README.md) §0.1「下载 / 获取」能成立的原因。
 
 带编译产物的项目（比如 Neovim 那套）先 `wtool build` 把产物编出来、再 `pack-release` ——
 编译逻辑在它自己的 `scripts/build.sh` 里，打包上传是引擎的事。
@@ -574,7 +574,7 @@ wtool/terminal/tmux/wtool.xml
 
 ### 刷新下载页：`wtool docs refresh`
 
-README 第 2 节那张表（"没有 `git clone` 的时候怎么装"）不是手写的，它由这条命令生成：
+README §0.1 那张发布包一览表不是手写的，它由这条命令生成：
 
 ```bash
 wtool docs refresh      # 完整写法
@@ -637,7 +637,7 @@ wtool status               # 登记表 + 软链检查（不带项目）
 wtool status <项目>         # 逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate ./terminal/tmux
 wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quiet)" 立刻在当前 shell 生效
-wtool docs refresh         # 重刷 README 第 2 节的下载表
+wtool docs refresh         # 重刷 README §0.1 的发布包一览表
 ```
 
 **`wtool repair [<项目>|all]` —— 坏了自己修回来**（`check` 报什么修什么）：

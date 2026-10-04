@@ -7,9 +7,211 @@
 > 这份文档讲**怎么用**；每条规则**为什么**这么定（软链、记账、三层产物、发布契约……）
 > 在 [`原理.md`](原理.md)；每条命令的参数和细节在 [`guide.md`](guide.md)。
 
+**只想赶紧把包拿到手？** 不用 `git`、只有浏览器也行 —— 下载入口在 [§0.1 下载 / 获取](#01-下载--获取)。
+
 ---
 
-## 0. 在一台新机器上，从这里开始
+## 0. 先拿到一个工作区
+
+拿到工作区有两条路，**选一条就行** —— 两条路拿到的东西一样，后面的安装步骤（§0.1 的 ④）也完全一样：
+
+- **下包**：不用 `git`，浏览器上点几下 → [§0.1 下载 / 获取](#01-下载--获取)（**下载入口在这一节**）
+- **用 git**：`repo init` + `repo sync` 把全部仓库拉下来，以后更新一条命令 → [§0.2 用 git 拿全套](#02-用-git-拿全套推荐)
+
+### 0.1 下载 / 获取
+
+**不用 `git`、只在浏览器上点，也能把 `wtool` 和各个项目拿到手。** 这一节就是下载入口：
+① `wtool` 本体去哪儿下、② 各子项目的发布包一览、③ 下下来之后怎么变成能用的东西。
+
+#### ① `wtool` 本体（引擎）
+
+`wtool` 这条命令住在 **`bootstrap`** 这个项目里 —— **不在你现在看的这个文档仓库里**
+（这份文档是 `wtool-base`，里面只有文档）。引擎的仓库和发布页是：
+
+| 是什么 | 地址 |
+|---|---|
+| 仓库 | <https://github.com/allinkernel/wtool-bootstrap> |
+| 发布页（从这里下包） | <https://github.com/allinkernel/wtool-bootstrap/releases> |
+
+两种拿法，任选一种：
+
+```bash
+# 有 git 的机器：把引擎克隆到工作区的 bootstrap/ 目录
+mkdir -p ~/self/wtool
+git clone https://github.com/allinkernel/wtool-bootstrap.git ~/self/wtool/bootstrap
+```
+
+**只有浏览器**：打开上面那个发布页，下最新那一版里的**源码包**，解开。
+包里的第一层固定是 `wtool/`（和本机工作区目录叫什么无关），所以解开之后就有 `wtool/bootstrap/`。
+
+只下这一个也够开张：`cd wtool && ./bootstrap/scripts/install.sh` 就能把 `wtool` 装到本机
+（它不装任何项目，见下面 ④）。别的项目按需再下。
+
+> 地址不是猜的：工作区清单 `.repo/manifests/default.xml` 里 `path="bootstrap"` 那一行写的就是
+> `allinkernel/wtool-bootstrap`，`bootstrap/` 仓库自己的 remote 也是它。
+
+#### ② 各子项目的发布包一览
+
+下面这张表是**每个项目都有哪些发布包** —— 点版本号去 Release 页，点文件名直接下载。
+
+**这张表由 `wtool docs refresh` 重写，不要手改。** 它拿 `gh` 去 GitHub 查每个项目
+**真实存在**的 release，照查到的结果重写整块（`wtool publish-release` 发布成功之后也会自动跑
+一遍）；查不到东西时它**宁可不动这张表，也不拿空表覆盖**（见第 2.7 节）。
+所以表里的链接都是线上真实存在的地址，版本号就是**最后一次刷表时线上那一版**。
+
+<!-- >>> wtool:downloads >>> -->
+<!-- 这一块由 `wtool publish-release` 自动重写，不要手改。 -->
+
+每个项目的最新发布包都在它自己的 release 页面上。
+全部下载并解开之后，你会得到一个完整的工作区目录。
+
+| 项目 | 版本 | 包 | 大小 |
+|---|---|---|---|
+| `bootstrap` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-bootstrap/releases/tag/snapshot-2026-09-15) | [bootstrap-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz) | 86.4K |
+| `lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
+| `os/ubuntu` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/snapshot-2026-09-15) | [os-ubuntu-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz) | 4.0K |
+| `shell/oh-my-zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/snapshot-2026-09-15) | [shell-oh-my-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz) | 3.0M |
+| `shell/zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-zsh/releases/tag/snapshot-2026-09-15) | [shell-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz) | 2.2K |
+| `terminal/fzf` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/snapshot-2026-09-15) | [terminal-fzf-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz) | 1.7M |
+| `terminal/tmux` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-tmux-config/releases/tag/snapshot-2026-09-15) | [terminal-tmux-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz) | 4.5K |
+| `tools/repo` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-repo/releases/tag/snapshot-2026-09-15) | [tools-repo-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz) | 5.4K |
+| `wtool-base` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool/releases/tag/snapshot-2026-09-15) | [wtool-base-2026-09-15.tar.gz](https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz) | 23.0K |
+
+### bash（Linux / macOS / WSL）
+
+```bash
+mkdir -p ~/self && cd ~/self
+curl -fL -o bootstrap-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz
+curl -fL -o themes-typora-lightmind-2026-09-15.tar.gz \
+  https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz
+curl -fL -o os-ubuntu-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz
+curl -fL -o shell-oh-my-zsh-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz
+curl -fL -o shell-zsh-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz
+curl -fL -o terminal-fzf-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz
+curl -fL -o terminal-tmux-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz
+curl -fL -o tools-repo-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz
+curl -fL -o wtool-base-2026-09-15.tar.gz \
+  https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz
+tar -xf bootstrap-2026-09-15.tar.gz
+tar -xf themes-typora-lightmind-2026-09-15.tar.gz
+tar -xf os-ubuntu-2026-09-15.tar.gz
+tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
+tar -xf shell-zsh-2026-09-15.tar.gz
+tar -xf terminal-fzf-2026-09-15.tar.gz
+tar -xf terminal-tmux-2026-09-15.tar.gz
+tar -xf tools-repo-2026-09-15.tar.gz
+tar -xf wtool-base-2026-09-15.tar.gz
+```
+
+跑完 `~/self/wtool/` 就是一个完整的工作区。
+接着 `cd ~/self/wtool && ./bootstrap/scripts/install.sh`（第一次要用完整路径，
+它会把根目录的 `./install.sh` 等入口补齐，之后就能直接用短的了）。
+
+### PowerShell（Windows 10 及以上自带 tar）
+
+```powershell
+$d = "$HOME\self"; New-Item -ItemType Directory -Force -Path $d | Out-Null; Set-Location $d
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz" -OutFile "bootstrap-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz" -OutFile "themes-typora-lightmind-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz" -OutFile "os-ubuntu-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz" -OutFile "shell-oh-my-zsh-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz" -OutFile "shell-zsh-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz" -OutFile "terminal-fzf-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz" -OutFile "terminal-tmux-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz" -OutFile "tools-repo-2026-09-15.tar.gz"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz" -OutFile "wtool-base-2026-09-15.tar.gz"
+tar -xf bootstrap-2026-09-15.tar.gz
+tar -xf themes-typora-lightmind-2026-09-15.tar.gz
+tar -xf os-ubuntu-2026-09-15.tar.gz
+tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
+tar -xf shell-zsh-2026-09-15.tar.gz
+tar -xf terminal-fzf-2026-09-15.tar.gz
+tar -xf terminal-tmux-2026-09-15.tar.gz
+tar -xf tools-repo-2026-09-15.tar.gz
+tar -xf wtool-base-2026-09-15.tar.gz
+```
+
+跑完 `$HOME\self\wtool` 就是一个完整的工作区。
+<!-- <<< wtool:downloads <<< -->
+
+> 上面这一段（表格 + bash / PowerShell 两版命令）也是**引擎生成的**，文件名和链接以它列出的为准。
+> 照着走的时候记住两条：① 工作区根目录那条入口的完整写法是
+> `./bootstrap/scripts/install.sh`（见下面 ④）；② 一个项目的包放进一个目录 ——
+> 别把几个项目的包混在一起（③ 末尾有原因）。
+
+#### ③ 下下来之后：两条路，命令写全
+
+一个项目的发布页里有两种包：
+
+| 包 | 是什么 | 谁要 |
+|---|---|---|
+| **源码包** | 整个项目的目录树（包里第一层是 `wtool/<项目>/`） | 要自己编的、要改源码的；**拿到工作区**也是靠它 |
+| **产物包** | 编好的东西（`__output/` 里那些）。大的项目会切成 `-vol01`、`-vol02`…，外加一份 `dist.json` 说明每一卷叫什么、按什么顺序拼 | 只想用、不想编的（Neovim 那套就是） |
+
+**路线 A：手动下（浏览器点，不用 `wtool`）**
+
+1. 在表里（或各项目自己的 Release 页）把要的项目下下来；
+2. 解开**源码包** → 得到工作区（第一层固定是 `wtool/`），`cd` 进去；
+3. 装 `wtool` 自己：`./bootstrap/scripts/install.sh`（见下面 ④）；
+4. 要**产物包**的项目，把 `release.zip`（和分卷、`dist.json`）放进该项目的 `__release/` 目录，然后：
+
+```bash
+wtool unpack-release <项目>   # 照 dist.json 校验 + 拼分卷 + 解到 __output/
+wtool install        <项目>   # 登记 + 软链 + shell 集成
+```
+
+**路线 B：只下源码，release 交给 `wtool` 自己下（推荐，省手）**
+
+前 3 步和路线 A 一样（下源码包 → 解开 → 装 `wtool`），然后：
+
+```bash
+wtool download-release <项目>   # 读项目里提交的 scripts/release.json → 下到 <项目>/__release/
+wtool unpack-release   <项目>   # 校验 + 拼分卷 + 解到 __output/
+wtool install          <项目>   # 装
+```
+
+- `wtool download-release` 不带参数敲：列出**哪些项目有现成的包**可下；一次全下用
+  `wtool download-release all`。
+- **前提是项目里提交了 `scripts/release.json`**（发布方发完一版要把它提交进仓库 —— 它就是
+  "这一版该下哪些文件"的清单）。没提交的项目敲了会明说「没有 `scripts/release.json`」，
+  那就走路线 A，或者自己编：`wtool build <项目>`（要编译器和网络，几十分钟到几小时）。
+
+> ⚠️ **别把几个项目的包下到同一个目录**：引擎打包时给的文件名是 `源码.zip` / `release.zip`
+> 这种**不带项目名**的名字，放一起会互相覆盖；而且**产物包不能改名**（`dist.json` 是按名字
+> 校验每一卷的）。一个项目一个目录最省事；走路线 B 就完全不用管这件事。
+
+#### ④ 解开之后：装 `wtool` 自己，再让它装项目
+
+不管走哪条路，拿到工作区之后的步骤完全一样（**第一次要用完整路径** —— 解压出来的工作区
+还没有根目录那几个入口，这个脚本会顺手补齐）：
+
+```bash
+cd <工作区目录>                  # 比如 ~/self/wtool
+./bootstrap/scripts/install.sh   # 准备运行环境 + 装 wtool 自己；做完就停，不装任何项目
+exec $SHELL                      # 让当前 shell 认识 wtool（或者重开一个终端）
+
+wtool sudo-bootstrap             # 系统层：apt 包、/etc 下的文件。要 root；没有 sudo 就跳过
+wtool bootstrap                  # 用户层：文件、软链、shell 集成。不要 sudo、不联网
+```
+
+`./bootstrap/scripts/install.sh` 只走四步：准备运行环境（缺 `python3`/`git` 就装上）、
+自举引擎到 `~/.wtool/bootstrap`、补齐工作区入口（`./install.sh`、`./README.md`…）、
+让 `wtool` 进 `PATH`。**它一个项目都不装**，屏幕最后会把接下来该敲的命令直接打给你。
+
+> **安装说明只有这一处权威：本文档**（细节版是 [`guide.md`](guide.md)）。
+> 子项目自己的 README 只讲「这个项目是什么、有哪些脚本」，不另写一套安装步骤。
+> **项目里的 `scripts/install.sh` 也不要去自己敲** —— 那是 `wtool install` 的活：引擎负责给它
+> 导好环境变量、按声明建软链、把"装过什么"记进账；自己敲等于绕过引擎，账对不上，以后卸不干净
+> （见第 3.4 节）。
+
+### 0.2 用 git 拿全套（推荐）
 
 **先装 `wtool` 自己，再让它去装项目。** 一共五步：
 
@@ -98,7 +300,7 @@ wtool install --<TAB>  # 列这个命令认的开关（--dry-run / --force / --p
 
 给不出候选时（比如参数本来就是路径）会退回补文件名，所以没破坏原来的习惯。
 bash 和 zsh 各一份、行为一致；内部命令（`_layer-save` 这种下划线开头的）不进候选，
-这台机器没有 sudo 时 `sudo-*` 那几个命令也不进候选。用法细节见第 3.2 节。
+这台机器没有 sudo 时 `sudo-*` 那几个命令也不进候选。用法细节见第 2.2 节。
 
 **不想在真机上试？** 用容器跑一遍（`--network=host` 不能省：容器里的
 `127.0.0.1` 只有在这个网络模式下才是宿主自己，脚本靠它自动接上宿主代理）：
@@ -113,7 +315,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
   ubuntu:24.04 bash /wtool/bootstrap/scripts/container-shell.sh
 ```
 
-（`$PWD` 要换成工作区目录；两个容器脚本的差别见第 4.3 节。）
+（`$PWD` 要换成工作区目录；两个容器脚本的差别见第 3.3 节。）
 
 > **怎么看下面这些表**：✅ = 现在就能用；🚧 = 已经设计好、还没实现（敲它会报
 > "不认识这条命令"）。这份文档只写**已经成立**的东西 —— 还在做的是什么、
@@ -195,11 +397,11 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | `wtool pack-release <路径>` | 打成**两个包**（源码包 + 产物包）写进项目的 `__release/`，各带一个校验文件 | ❌ | ❌ | 删掉 `__release/` 就没了 |
 | `wtool unpack-release <路径>` | 在另一台机器上把包**校验 + 解开**（大项目是分卷的），解到 `__output/` | ❌ | ❌ | 同上 |
 | `wtool publish-release [<路径>]` | **只上传**：把 `__release/` 里的东西传到项目自己的 GitHub Release 页，然后写下"这一版有什么"的下载声明 | ❌ | ✅ | 已经被人下载走的收不回来 |
-| `wtool docs refresh` | 重刷这份 README 里「没有 `git clone` 的时候怎么装」那张下载表：拿 `gh` 去 GitHub 查每个项目**真实存在**的 release，照它重写（第 2 节那一块就是它写的） | ❌ | ✅（要 `gh` 且已登录） | 改的是文档，`git checkout` 就能回退 |
+| `wtool docs refresh` | 重刷这份 README 里「下载 / 获取」那张发布包一览表：拿 `gh` 去 GitHub 查每个项目**真实存在**的 release，照它重写（§0.1 的 ② 那一块就是它写的） | ❌ | ✅（要 `gh` 且已登录） | 改的是文档，`git checkout` 就能回退 |
 
 > `wtool docs` 单独敲、`wtool docs refresh`、`wtool refresh-downloads` —— **三个入口同一条命令**。
 > 它不在 `wtool --help` 的清单里，平时也不用记：`wtool publish-release` 发成功之后会自动跑一遍。
-> 什么时候需要手动跑、跑不动怎么查，见第 3.7 节。
+> 什么时候需要手动跑、跑不动怎么查，见第 2.7 节。
 
 **层（只有容器构建的项目才有，比如 Neovim 那套）**
 
@@ -668,139 +870,19 @@ wtool status editor/astronvim_v5
 
 ---
 
-## 2. 没有 `git clone` 的时候怎么装
-
-有些机器（比如公司内网）访问不了 GitHub 的命令行，或者干脆只让用浏览器下载。这种情况下不用 `git`，直接从网页把打包好的文件下下来就行。
-
-每个项目的最新版本都在它自己的 Release 页面里，包已经按正确目录结构打好，**全部下载、解开，得到的就是一个完整的工作区**。
-
-下面那张表**不要手改** —— 它由 `wtool` 自动重写：发布新版本时 `wtool publish-release`
-会顺手刷新一遍，也可以手动跑 `wtool docs refresh`（`wtool refresh-downloads` 同义）。
-表里的链接一律以 GitHub 上**真实存在**的 release 为准，所以不会出现点不开的地址；
-刷新不动、或者刷出空表时怎么查，见第 3.7 节。
-
-<!-- >>> wtool:downloads >>> -->
-<!-- 这一块由 `wtool publish-release` 自动重写，不要手改。 -->
-
-每个项目的最新发布包都在它自己的 release 页面上。
-全部下载并解开之后，你会得到一个完整的工作区目录。
-
-| 项目 | 版本 | 包 | 大小 |
-|---|---|---|---|
-| `bootstrap` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-bootstrap/releases/tag/snapshot-2026-09-15) | [bootstrap-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz) | 86.4K |
-| `lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
-| `os/ubuntu` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/snapshot-2026-09-15) | [os-ubuntu-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz) | 4.0K |
-| `shell/oh-my-zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/snapshot-2026-09-15) | [shell-oh-my-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz) | 3.0M |
-| `shell/zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-zsh/releases/tag/snapshot-2026-09-15) | [shell-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz) | 2.2K |
-| `terminal/fzf` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/snapshot-2026-09-15) | [terminal-fzf-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz) | 1.7M |
-| `terminal/tmux` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-tmux-config/releases/tag/snapshot-2026-09-15) | [terminal-tmux-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz) | 4.5K |
-| `tools/repo` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-repo/releases/tag/snapshot-2026-09-15) | [tools-repo-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz) | 5.4K |
-| `wtool-base` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool/releases/tag/snapshot-2026-09-15) | [wtool-base-2026-09-15.tar.gz](https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz) | 23.0K |
-
-### bash（Linux / macOS / WSL）
-
-```bash
-mkdir -p ~/self && cd ~/self
-curl -fL -o bootstrap-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz
-curl -fL -o themes-typora-lightmind-2026-09-15.tar.gz \
-  https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz
-curl -fL -o os-ubuntu-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz
-curl -fL -o shell-oh-my-zsh-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz
-curl -fL -o shell-zsh-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz
-curl -fL -o terminal-fzf-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz
-curl -fL -o terminal-tmux-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz
-curl -fL -o tools-repo-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz
-curl -fL -o wtool-base-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz
-tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf themes-typora-lightmind-2026-09-15.tar.gz
-tar -xf os-ubuntu-2026-09-15.tar.gz
-tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
-tar -xf shell-zsh-2026-09-15.tar.gz
-tar -xf terminal-fzf-2026-09-15.tar.gz
-tar -xf terminal-tmux-2026-09-15.tar.gz
-tar -xf tools-repo-2026-09-15.tar.gz
-tar -xf wtool-base-2026-09-15.tar.gz
-```
-
-跑完 `~/self/wtool/` 就是一个完整的工作区。
-接着 `cd ~/self/wtool && ./bootstrap/scripts/install.sh`（第一次要用完整路径，
-它会把根目录的 `./install.sh` 等入口补齐，之后就能直接用短的了）。
-
-### PowerShell（Windows 10 及以上自带 tar）
-
-```powershell
-$d = "$HOME\self"; New-Item -ItemType Directory -Force -Path $d | Out-Null; Set-Location $d
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz" -OutFile "bootstrap-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz" -OutFile "themes-typora-lightmind-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz" -OutFile "os-ubuntu-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz" -OutFile "shell-oh-my-zsh-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz" -OutFile "shell-zsh-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz" -OutFile "terminal-fzf-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz" -OutFile "terminal-tmux-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz" -OutFile "tools-repo-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz" -OutFile "wtool-base-2026-09-15.tar.gz"
-tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf themes-typora-lightmind-2026-09-15.tar.gz
-tar -xf os-ubuntu-2026-09-15.tar.gz
-tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
-tar -xf shell-zsh-2026-09-15.tar.gz
-tar -xf terminal-fzf-2026-09-15.tar.gz
-tar -xf terminal-tmux-2026-09-15.tar.gz
-tar -xf tools-repo-2026-09-15.tar.gz
-tar -xf wtool-base-2026-09-15.tar.gz
-```
-
-跑完 `$HOME\self\wtool` 就是一个完整的工作区。
-<!-- <<< wtool:downloads <<< -->
-
-下载解压完成之后，你会得到一个 `~/self/wtool` 目录。进去，跑 `bootstrap/scripts/` 下面那个：
-
-```bash
-cd ~/self/wtool
-./bootstrap/scripts/install.sh
-```
-
-**这一次要用完整路径**——解压出来的工作区还没有根目录那几个入口（`./install.sh`、`./README.md` 之类）。那些是 `repo` 工具在 `repo sync` 时按清单建的，而你是手动解压的。第一次跑它会顺手把它们补齐：
-
-```
-wtool-install: 第 2 步：工作区入口（/home/you/self/wtool）
-wtool-install:   install.sh -> bootstrap/scripts/install.sh
-wtool-install:   README.md -> wtool-base/README.md
-...
-```
-
-之后 `./install.sh` 就能直接用了，和 `repo sync` 出来的工作区完全一样。
-
-这个脚本只走四步：准备运行环境（缺 `python3`/`git` 就装上；**没有 sudo 时会告诉你该让管理员装什么，然后停在这里**，见第 0 节）、自举引擎到 `~/.wtool/bootstrap`、补齐上面那些工作区入口、让 `wtool` 进 `PATH`。**做完就停，它不装任何项目**——屏幕最后会直接把接下来该敲的命令打给你（`exec $SHELL`，然后 `wtool sudo-bootstrap` / `wtool bootstrap`），照着走即可。没有 sudo 的机器跳过 `wtool sudo-bootstrap` 那条即可，`wtool bootstrap` 照样能用。
-
-**要编译产物的项目（现在只有 Neovim 那套）还有一步**：它的 Release 页面里除了源码包，
-还有产物包（大项目是若干分卷，配一个 `dist.json`）。把这些下到项目的 `__release/` 目录下，
-用 `wtool unpack-release <项目目录>` 校验并解开，再 `wtool install <项目目录>` 收尾。
-`unpack-release` 只认 `dist.json`，不需要你记分卷的顺序。
-（如果这台机器上已经有 `wtool` 了，这一步可以交给 `wtool download-release <项目>`
-自动下 —— 它照项目里提交的 `scripts/release.json` 把该下的文件都下到 `__release/`。）
-
----
-
-## 3. 怎么用
+## 2. 怎么用
 
 装完之后，`wtool` 命令就可以在任何目录下直接用了。
 
 不过有几条命令要你告诉它**项目在哪**：`install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `validate` 认的是**项目目录**——在工作区根目录下写
-`terminal/tmux` 就行，在别的地方要写全路径。`build` / `download-release` / `unpack-release` /
-`publish-release` / `status` 宽松些，直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）
+`terminal/tmux` 就行，在别的地方要写全路径。（`install` / `uninstall` 还认**项目 id**
+和末段：`wtool install terminal/tmux`、`wtool install tmux` 都行；`uninstall` 另有一条
+`--id <id>`。）`build` / `download-release` / `unpack-release` /
+`publish-release` / `status` 同样宽松，直接写项目名（`terminal/tmux`，甚至只要末段 `tmux`）
 也可以，在哪跑都认。
 
-### 3.1 看总览
+### 2.1 看总览
 
 ```bash
 wtool
@@ -812,7 +894,7 @@ wtool
 wtool doctor     # 表格 + 环境诊断（版本、系统、状态目录、缺什么）
 ```
 
-### 3.2 装
+### 2.2 装
 
 ```bash
 cd <工作区目录>                        # install / uninstall 认的是项目目录，在工作区根目录最省事
@@ -844,7 +926,7 @@ wtool install terminal/tmux --dry-run
 
 它会打印出计划（要建哪些链接、要写哪几段 shell 块），但不真的动系统。
 
-**装一个项目实际发生两件事，顺序是有意的**：
+**装一个项目实际发生两件事，顺序是有意的**（两件都是引擎替你做的，**你不用自己去敲那个脚本**）：
 
 ```
 ① 先跑项目自己的 scripts/install.sh   —— 把 __output/ 里的东西铺进 ~/.wtool
@@ -860,7 +942,7 @@ wtool sudo-bootstrap     # 系统层：apt 包、/etc 下的文件。要 root；
 wtool bootstrap          # 用户层：文件、软链、shell 集成。不需要 sudo、不联网
 ```
 
-需要「编还是下」的项目它会跳过，并把该跑的命令列给你——见 3.3。
+需要「编还是下」的项目它会跳过，并把该跑的命令列给你——见 2.3。
 
 【图片占位】![wtool install 的输出](.pic/install.png)
 
@@ -869,7 +951,7 @@ wtool bootstrap          # 用户层：文件、软链、shell 集成。不需�
      截图建议包含开始几行和结束几行，能看出"按项目逐个处理"的结构。
 -->
 
-### 3.3 产出：自己编，或者下现成的
+### 2.3 产出：自己编，或者下现成的
 
 有些项目要产出东西才能用——要么自己编，要么直接下别人编好的（比如那套 Neovim 环境）：
 
@@ -884,12 +966,13 @@ wtool unpack-release editor/astronvim_v5    # 校验 + 解开，写进 __output/
 
 **两条路二选一，结果完全等价。** 两条路都产出到项目的 `__output/` 目录、放在同一个位置，
 所以之后的 `wtool install` 根本不关心它是从哪来的。能下就下。
+（**没有 `git`、只想手动下包**的那条路 —— 连"只下产物包再解开"的走法 —— 在 §0.1 的 ③。）
 
 「下载」和「解开」是两条命令、各干一件事：`download-release` 只把包下到 `__release/`，
 `unpack-release` 才校验分卷、按顺序拼起来、解到 `__output/`。中断了重来也不会坏 ——
 已经下好的文件（校验值对得上）会跳过，不会重下几百兆。纯配置类的项目没有这一步。
 
-### 3.4 打包与发布
+### 2.4 打包与发布
 
 **打包**（不联网，产出落在项目自己的 `__release/` 目录里）：
 
@@ -922,9 +1005,9 @@ wtool publish-release --dry-run       # 先看计划
 `scripts/release.json`：这一版发了什么、每个文件的校验值是多少 ——
 **记得把它提交进仓库**，那是别人 `download-release` 时的依据。
 
-发布完成后，本文档第 2 节的下载链接会自动更新成最新的 —— 那一段是发布时重写的，不用手动维护。
+发布完成后，本文档 §0.1 的下载链接会自动更新成最新的 —— 那一段是发布时重写的，不用手动维护。
 
-### 3.5 卸载：三条命令，别用 `rm -rf`
+### 2.5 卸载：三条命令，别用 `rm -rf`
 
 **`rm -rf ~/.wtool` 不是完整卸载。** 它只删掉了影子家目录里的实体，
 你的 `$HOME` 里那些软链**还在**（全变成断链），`~/.zshrc` 里的 loader 块也还在。
@@ -945,7 +1028,7 @@ wtool publish-release --dry-run       # 先看计划
 没有它，那本账永远留着。它会先列清**删什么、不删什么**，
 再要求你**逐字输入一句全大写确认**，敲错一个字就什么都不做。
 
-### 3.6 检查与修复
+### 2.6 检查与修复
 
 ```bash
 wtool check              # 全部项目：声明 / 日志 / 磁盘 三者对比
@@ -968,7 +1051,7 @@ mv release __release    # 老的打包产出
 mv layer __layer        # 老的层仓库
 ```
 
-### 3.7 其他命令
+### 2.7 其他命令
 
 ```bash
 wtool doctor                        # 环境诊断（版本、系统、状态目录、缺什么）
@@ -976,7 +1059,7 @@ wtool status                        # 不带项目：登记表 + 软链检查（
 wtool status <项目>                  # 给了项目：逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate <项目目录>            # 检查某个项目的 wtool.xml 写得对不对
 wtool init <目录> [--id ID] [--priority N] [--all]   # 新建一个 wtool 项目
-wtool docs refresh                  # 重刷第 2 节那张下载表（= wtool docs / wtool refresh-downloads）
+wtool docs refresh                  # 重刷 §0.1 那张发布包一览表（= wtool docs / wtool refresh-downloads）
 wtool version
 ```
 
@@ -988,7 +1071,7 @@ wtool version
 - **带项目**（目录、项目 id、末段都行）—— 逐列给「状态 + 对应命令 + 依据」，
   用来看懂看板上某一格为什么是那个状态。
 
-**`wtool docs refresh` 什么时候用**：第 2 节那张下载表是自动维护的，`publish-release`
+**`wtool docs refresh` 什么时候用**：§0.1 那张发布包一览表是自动维护的，`publish-release`
 发成功之后会自己刷一遍，所以**平时不用管**。要手动跑通常是这几种：
 
 - 在**别的机器**上发的版本：本机没跑 `publish-release`，没人替你刷；
@@ -1004,6 +1087,10 @@ wtool version
 3. **它拒绝用空表覆盖已有的表**：如果查到 0 个资产（`gh` 没登录、网络不通、
    release 被删都会这样），而文档里本来有下载表，它会警告并停手 ——
    防止一次网络故障把 30 条链接清空。确认确实要清空才加 `--force`。
+4. **它查的是"今天"那一版**：tag 按每个项目的模板算（默认 `snapshot-%Y-%m-%d`，
+   也就是当天日期）。所以**发布那天刷才刷得到东西** —— 当天没发过版本，就是第 3 条
+   那个「查到 0 个资产」，表原样不动。`publish-release` 发布成功后自动跑的那一遍，
+   正好是"今天发了版本"的情况，所以表总是跟着最新发布走。
 
 `build` / `download-release` / `unpack-release` / `install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `pack-release` / `publish-release` / `unpack-layer` / `push-layer` /
@@ -1016,17 +1103,17 @@ wtool version
 `docs refresh` / `kill-self-forever` 也有 `--dry-run`（前者只打印"要刷哪个文档"，
 后者只打印"会删什么、不删什么"）。
 
-`repair` 和 `kill-self-forever` 分别在第 3.6、3.5 节。
+`repair` 和 `kill-self-forever` 分别在第 2.6、2.5 节。
 
 `wtool` 不带参数跑一下就是第 1 节那张能力总览表。
 
 ---
 
-## 4. 仓库里这些脚本分别干什么
+## 3. 仓库里这些脚本分别干什么
 
 项目里有一堆同名的 `.sh`，容易搞混。按"谁调用谁"分三层看就清楚了。
 
-### 4.1 工作区根目录看到的
+### 3.1 工作区根目录看到的
 
 根目录那几个是**软链接**，指向真正的文件（`repo sync` 建出来的）：
 
@@ -1040,7 +1127,7 @@ wtool version
 记住一句分工：**根目录的 `install.sh` 只负责让 `wtool` 这条命令出现**，
 项目是靠 `wtool install` 装的。这是两件事。
 
-### 4.2 引擎
+### 3.2 引擎
 
 | 文件 | 干什么 |
 |---|---|
@@ -1051,7 +1138,7 @@ wtool version
 刻意分成两半（Python 推理、Shell 动手），这样"会发生什么"可以在动手之前
 完整算出来——`--dry-run` 才有意义。
 
-### 4.3 给容器用的两个脚本
+### 3.3 给容器用的两个脚本
 
 工作区挂进容器时，这两个差别很大：
 
@@ -1101,13 +1188,13 @@ docker run --rm -it --network=host \
 - `./install.sh` 装包时每 5 秒打一行 `还在装…（N 秒）· <apt 最后一行>`。容器里下载本来就慢
   （走代理时更慢），以前屏幕上几分钟没动静，人以为卡死就把容器 Ctrl-C 了 —— 有这行就说明它还活着。
 - 交给你的是**新开的 shell**（脚本最后 `exec bash -i`），所以 Tab 补全直接就能用：
-  `wtool <TAB>` 列子命令、`wtool install <TAB>` 列项目 id（见 3.2）。
+  `wtool <TAB>` 列子命令、`wtool install <TAB>` 列项目 id（见 2.2）。
 
 **看板列数取决于容器里这个用户能不能提权**：不带 `--user` 时你是 root，`--user` 建的那个
 普通用户是 **sudo 免密**，两种都算"有 sudo"，看板是 13 列；想看"没有 sudo"的 11 列，
 得用一个真没有 sudo 的用户（判定规则见 1.5）。
 
-### 4.4 每个项目自己的 `scripts/`
+### 3.4 每个项目自己的 `scripts/`
 
 项目目录下的 `scripts/` 是**这个项目专属**的动作，**只有两种**。
 有没有某个文件本身就是一种声明——有 `build.sh` 才叫"能构建"：
@@ -1115,8 +1202,13 @@ docker run --rm -it --network=host \
 | 文件 | 什么时候跑 | 干什么 |
 |---|---|---|
 | `build.sh` | `wtool build <项目>` | 自己编，**产物写进项目的 `__output/`** |
-| `install.sh` | `wtool install <项目目录>` | 把 `__output/` 铺进 `~/.wtool/usr`；**不要**自己建 `$HOME` 软链、不要写 rc —— 那是引擎按 `wtool.xml` 干的（顺序上也保证：项目脚本跑完之后引擎才建 `$HOME` 软链） |
-| `install.sh --uninstall` | `wtool uninstall <项目目录>` | 撤销上面做的 |
+| `install.sh` | `wtool install <项目>` | 把 `__output/` 铺进 `~/.wtool/usr`；**不要**自己建 `$HOME` 软链、不要写 rc —— 那是引擎按 `wtool.xml` 干的（顺序上也保证：项目脚本跑完之后引擎才建 `$HOME` 软链） |
+| `install.sh --uninstall` | `wtool uninstall <项目>` | 撤销上面做的 |
+
+**这两个脚本只有引擎会跑，别自己去敲。** 引擎调它们的时候会导好环境变量
+（`WTOOL_PROJECT_DIR` / `WTOOL_PREFIX` …）、按顺序铺实体和软链、并记下"装过什么"；
+绕过引擎直接跑，账上没有这一笔，以后 `wtool uninstall` 就撤不干净。
+（**安装步骤只有一处权威：本文档**，见 §0.1 的 ④；子项目自己的 README 不另写一套。）
 
 **下载、打包、上传都不用项目写脚本**：`wtool download-release` / `unpack-release`
 （取现成的包）和 `wtool pack-release` / `publish-release`（打包上传）是引擎自带的命令，
@@ -1143,7 +1235,7 @@ docker run --rm -it --network=host \
 那是给**只能用浏览器下载**的机器用的：把它们下到项目的 `__release/` 目录，
 `wtool unpack-release <项目目录>` 校验并解开，再用 `wtool install <项目目录>` 收尾。
 
-### 4.5 不要手改的地方
+### 3.5 不要手改的地方
 
 - 项目的 `wtool.xml` 可以改（那是给你声明用的），改完跑 `wtool validate <项目目录>` 看一眼
 - 项目里的 `__output/` / `__release/` / `__layer/` 是**产物**，不要手改，也不要把文件放进 Git —— 它们在 `.gitignore` 里是有原因的
