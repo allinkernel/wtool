@@ -49,15 +49,20 @@ terminal/tmux/
 ```xml
 <wtool schema="1" priority="50">
 
-  <!-- 把本目录的 tmux.conf 软链到 ~/.tmux.conf -->
-  <link src="tmux.conf" dest=".tmux.conf"/>
+  <!-- 把本目录的 tmux.conf 软链到 ~/.tmux.conf
+       （三段映射：$HOME 的落点 / 影子 HOME 那一跳 / 项目里的来源；
+         wtool= 可省，省了就按 $HOME 的镜像路径推） -->
+  <link home="~/.tmux.conf"
+        wtool="~/.wtool/.tmux.conf"
+        subproject="tmux.conf"/>
 
   <!-- 环境变量/命令：zsh 和 bash 各一份（内容等价） -->
-  <env src="env.zsh"  shells="zsh"/>
-  <env src="env.bash" shells="bash"/>
+  <zshrc  src="env.zsh"/>
+  <bashrc src="env.bash"/>
 
   <!-- 需要装系统包时（不可逆，和上面两条分开） -->
-  <provision src="provision/packages.yaml" marker="tmux-deps"/>
+  <sudo-install src="provision/packages.yaml" marker="tmux-deps"
+                when="os:ubuntu" desc="tmux 的系统依赖"/>
 
 </wtool>
 ```
@@ -66,18 +71,23 @@ terminal/tmux/
 
 | 元素 | 作用 | 可逆 |
 |---|---|---|
-| `<link src dest>` | 把项目里的文件软链到 `$HOME` 下 | 是 |
-| `<env src shells>` | 在 shell 配置里插入一段托管块，`source` 这个文件 | 是 |
-| `<provision src>` | 装系统包 / 跑脚本（不可逆） | 否 |
+| `<link home= wtool= subproject=>` | 把项目里的文件软链到 `$HOME` 下（`wtool=` 可省） | 是 |
+| `<zshrc src=/>` / `<bashrc src=/>` | 在 shell 配置里插入一段托管块，`source` 这个文件 | 是 |
+| `<sudo-install …>` | 系统层：装 apt 包 / 写 `/etc` 下的文件 / 跑脚本（不可逆，要 sudo） | 否 |
 | `<publish kind>` | 怎么发布到 GitHub Release | —— |
 
-另外还有两类，用到时再看对应项目的 `wtool.xml`：`<system-file>`（写 `$HOME` 之外的系统文件，比如换 apt 源；写前备份，卸载时还原）和 `<source>`（源码编译型项目）。
+另外还有 `<source>`（上游源码：clone → 固定 ref → 铺 overlay）和 `<build kind=…>`（本地编还是容器分层编）这些，用到时再看对应项目的 `wtool.xml` 与 `bootstrap/docs/manifest-schema.md`。
 
-> **`<env>` 要两个 shell 各写一份**（`env.zsh` + `env.bash`，内容等价）。
+> ⚠️ **老写法引擎还认，但每次解析都会警告**，照老教程抄会看到一片 warning：`<env src= shells=/>`
+> → 现在的 `<zshrc src=/>` / `<bashrc src=/>`；`<link src= dest=/>` → `<link home= wtool= subproject=/>`；
+> `<provision …/>`、`<system-file …/>` → 并进 `<sudo-install …/>`。看到警告按上面的新名字改就行。
+
+> **shell 那两条要两个 shell 各写一份**（`env.zsh` + `env.bash`，内容等价）。
 > 有人机器上没有 zsh，只写一份的话另一个 shell 的用户敲命令是 `command not found`，
 > 而 shell 配置里看起来明明装过了 —— 这种半装状态最难查。
 > 如果内容两个 shell 都认（只 export 变量、不做 zsh/bash 特有的事），
-> 也可以一份 `env.sh` 配 `shells="zsh,bash"`，`tools/android_repack` 就是这么写的。
+> **让两条指向同一个文件**就行：`tools/android_repack` 就是
+> `<zshrc src="env.sh"/>` + `<bashrc src="env.sh"/>`。
 
 `priority` 决定处理顺序，数字小的先来。`bootstrap` 是 5，因为它要最早把环境变量准备好；纯配置项目一般 100 也无所谓。
 
@@ -320,10 +330,13 @@ wtool status
 ```
 wtool: 所有登记的软链都在（2 条）
 
-PROJECT                  KIND     DEST
-terminal/tmux            file     /home/<你>/.tmux.conf
-tools/git-repo-sh-tools  dir      /home/<你>/.wtool/wtool-work-dir/links/tools/git-repo-sh-tools
+PROJECT      KIND     DEST
+terminal/tmux file     /home/<你>/.tmux.conf
+tools/git-repo-sh-tools dir      /home/<你>/.wtool/wtool-work-dir/links/tools/git-repo-sh-tools
 ```
+
+> 上面这两行就是**真实输出**（列宽是写死的 `%-12s %-8s`）：项目名一超过 12 个字符，
+> 后面两列就被顶开、看着不齐 —— 不是排版错，是它本来就这样。
 
 > 它查的是**登记过的**那些软链（`wtool install` 记下来的账），不扫整个 `$HOME` ——
 > 所以你自己手工建的软链不会被它误报，也不会被它删。
@@ -418,6 +431,11 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 __
 所以中断了重跑不会重下。`unpack-release` 再照包自带的 `dist.json` 校验每一卷、
 按顺序拼起来、解到 `__output/`。**这两条都不需要项目写脚本。**
 
+> ⚠️ **已知缺陷：`unpack-release --dry-run` 目前会真的解包。** 开关被认下来了，
+> 但只有 `mkdir` 那一步变成打印，**分卷拼接与解包照做** —— 也就是照样往 `__output/` 里写
+> （2026-10-05 实测复现，代码待修；跟踪见 `harness/BACKLOG.md`）。`build` /
+> `download-release` / `pack-release` 的 `--dry-run` 是干净的，可以放心用。
+
 **两条路（自己编 / 下载解开）产出落在完全相同的路径**，所以 `build + install` 和
 `download-release + unpack-release + install` 结果一样，装的时候不需要知道东西是哪来的。
 编一次几十分钟到几小时，下载几分钟——能下载就下载。
@@ -425,7 +443,9 @@ wtool unpack-release editor/astronvim_v5     # 校验分卷 + 拼接 + 解到 __
 约定有几条：
 
 - 项目脚本要**能重复跑**（中断了重来不会坏）
-- 项目脚本要支持 `--dry-run`，这样 `--dry-run` 能一层层透传下去
+- **项目脚本不要假设会收到 `--dry-run`**：dry-run 时引擎**根本不执行**项目脚本，
+  只打印"真跑的话会跑哪条脚本、在哪个目录、给什么环境变量" —— 所以脚本里不用
+  （也不该）自己实现这个开关，引擎那一层保证"一个字节都不写"
 - 项目脚本拿到的 stdin 是 `/dev/null`——不要写交互式提问，没人应答
 
 构建是很慢的一步，但只有需要的项目才有。

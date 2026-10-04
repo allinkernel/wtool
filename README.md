@@ -447,7 +447,7 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | 命令 | 做什么 | 要 sudo 吗 | 碰网络吗 | 可撤吗 |
 |---|---|---|---|---|
 | `wtool check [<路径>\|all]` | 三者对比：**声明**（`wtool.xml`）、**日志**（装过什么）、**磁盘**（现在有什么） | ❌ | ❌ | 只看不动 |
-| `wtool repair [<路径>\|all]` | 修 `check` 报出来的问题（补软链、清多余记录） | ❌ | ❌ | 只按 `check` 的结果修，不引入新东西 |
+| `wtool repair [<路径>\|all]` | 把**安装计划重跑一遍**（补中转链接、补 `$HOME` 软链、重写 shell 集成块）。**只重建、不删除**，也不跑项目脚本 | ❌ | ❌ | 幂等，重复跑没有副作用 |
 
 **销毁**
 
@@ -467,10 +467,20 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 | `wtool init <目录>` | 新建一个 wtool 项目 |
 | `wtool version` | 打印版本 |
 
-**会动手的那些命令**（`build` / `download-release` / `unpack-release` / `install` / `uninstall` /
+**会动手的那些命令**（`build` / `download-release` / `install` / `uninstall` /
 `sudo-install` / `sudo-uninstall` / `pack-release` / `publish-release` / `unpack-layer` /
 `push-layer` / `pull-layer` / `bootstrap` / `sudo-bootstrap` / `repair`）都支持 `--dry-run`：
 先打印计划、不真的动系统。
+
+> ⚠️ **已知缺陷：`unpack-release` 不在上面这份名单里。** 它的 `--dry-run` 只让 `mkdir`
+> 那一步变成打印，**分卷拼接与解包照做** —— 也就是照样会往 `__output/` 里写东西
+> （2026-10-05 实测复现，代码待修；跟踪见 `harness/BACKLOG.md`）。修好之前，
+> **别把 `unpack-release --dry-run` 当"只读预演"**。
+
+**会改状态目录的命令共用一把写锁**：`install` / `uninstall` / `bootstrap` / `sudo-*` /
+`repair` / `kill-self-forever` 都要拿 `$WTOOL_STATE/.lock`。同一台机器上同时跑两个，
+**后一个会等前一个**（默认最多等 300 秒，等不到就失败）；等待上限用
+`WTOOL_LOCK_TIMEOUT=<秒>` 调，设 `0` = 一秒不等；`--dry-run` 不拿锁（它什么都不写）。
 
 **"永不要 sudo、永不联网"不是口号，它是可逆性的实现方式。** 只要 `install`
 不产生任何新的外部依赖，"撤销"就是把铺出去的东西删掉这么简单。
@@ -507,11 +517,11 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 │       ├── main/        底座：主程序 + 基础配置
 │       └── lang/        语言增量包，依赖 main
 │           └── cpp/ python/ java/ rust/ go/ lua/
-├── __release/           ← 包的中转站，不进 Git
-│   ├── xxx-源码.zip     整个项目（不含这三个目录）
-│   ├── xxx-源码-hash.txt
-│   ├── xxx-release.zip  产物包：__output/ 里的东西（大项目切成 -vol01、-vol02…）
-│   ├── xxx-release-hash.txt
+├── __release/           ← 包的中转站，不进 Git（文件名就是这个，不带项目名前缀）
+│   ├── 源码.zip         整个项目（不含这三个目录；大项目切成 源码.zip-vol01、-vol02…）
+│   ├── 源码-hash.txt
+│   ├── release.zip      产物包：__output/ 里的东西（同样按 -vol01、-vol02… 切分卷）
+│   ├── release-hash.txt
 │   ├── dist.json        这一份怎么拼：每一卷叫什么、多大、校验值是多少
 │   └── .source          内部标记：这份包是"刚打的"还是"刚下的"
 └── __layer/             ← 层镜像（只有容器构建的项目），不进 Git
@@ -980,7 +990,7 @@ wtool bootstrap          # 用户层：文件、软链、shell 集成。不需�
 
 需要「编还是下」的项目它会跳过，并把该跑的命令列给你——见 2.3。
 
-【图片占位】![wtool install 的输出](.pic/install.png)
+【图片占位】![wtool bootstrap 的输出](.pic/install.png)
 
 <!-- TODO: 在一台干净机器（或容器）上执行，把输出截图保存为 .pic/install.png
      wtool bootstrap
@@ -1069,12 +1079,13 @@ wtool publish-release --dry-run       # 先看计划
 ```bash
 wtool check              # 全部项目：声明 / 日志 / 磁盘 三者对比
 wtool check terminal/tmux
-wtool repair all         # 修 check 报出来的
+wtool repair all         # 把安装计划重跑一遍（补链接、补软链、重写 shell 块）
 ```
 
 `check` 回答的是"我以为装了的东西，真的还在吗"：`wtool.xml` 里声明了什么、
 日志里记着装过什么、磁盘上现在有什么——**三者对不上就报出来**。
-`repair` 只按 `check` 的结果修，不会顺手引入新的东西。
+`repair` 是**把安装计划重新算一遍再执行**（`plan-install` 本来就是幂等的），
+**只重建、不删除**，也不跑项目脚本 —— 它**不去读 `check` 的报告**，两份各干各的。
 
 **老工作区的目录改名也由 `check` 提示**：`__output/` / `__release/` / `__layer/`
 是后来的名字，老的 `output/` / `release/` / `layer/` 不会被自动搬（看板只会显示「待产出」）。
@@ -1128,7 +1139,7 @@ wtool version
    那个「查到 0 个资产」，表原样不动。`publish-release` 发布成功后自动跑的那一遍，
    正好是"今天发了版本"的情况，所以表总是跟着最新发布走。
 
-`build` / `download-release` / `unpack-release` / `install` / `uninstall` / `sudo-install` /
+`build` / `download-release` / `install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `pack-release` / `publish-release` / `unpack-layer` / `push-layer` /
 `pull-layer` / `bootstrap` / `sudo-bootstrap` / `repair` / `kill-self-forever`
 都支持 `--dry-run`：先打印计划、不真的动系统。
@@ -1138,6 +1149,10 @@ wtool version
 `status` / `doctor` / `validate` 这些只看不动的没有这个开关；
 `docs refresh` / `kill-self-forever` 也有 `--dry-run`（前者只打印"要刷哪个文档"，
 后者只打印"会删什么、不删什么"）。
+
+> ⚠️ **例外：`unpack-release` 不在上面那份名单里。** 它的 `--dry-run` 只拦住 `mkdir`，
+> **分卷拼接与解包照做**，会真的写 `__output/`（2026-10-05 实测复现，代码待修；
+> 跟踪见 `harness/BACKLOG.md`）。
 
 `repair` 和 `kill-self-forever` 分别在第 2.6、2.5 节。
 
