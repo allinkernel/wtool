@@ -787,7 +787,7 @@ wtool version
 
 | 脚本 | 做什么 | 什么时候用 |
 |---|---|---|
-| `bootstrap/scripts/container-shell.sh` | 装系统依赖 → 装引擎 → 跑一遍 `wtool bootstrap` → 把你丢进 zsh | 想马上得到一个能用的环境 |
+| `bootstrap/scripts/container-shell.sh` | 装系统依赖 → 装引擎 → 把你丢进 zsh（**剩下两步自己敲**：`wtool sudo-bootstrap` 再 `wtool bootstrap`） | 想马上得到一个能用的环境 |
 | `bootstrap/scripts/container-raw.sh` | **什么都不装**，只挂工作区 → 进 bash | 想从零走一遍，每一步自己决定 |
 
 `container-raw.sh` 的状态等价于"刚 `repo sync` 完"：连 `python3` 和 `git`
