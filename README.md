@@ -230,6 +230,60 @@ wtool bootstrap                    # 用户层：文件、软链、shell 集成�
 > 导好环境变量、按声明建软链、把"装过什么"记进账；自己敲等于绕过引擎，账对不上，以后卸不干净
 > （见第 3.4 节）。
 
+#### ⑤ 预览发布：从 `ds_dev` 分支发的包（2026-10-07 这一轮）
+
+除了上面那张「正式版」表，线上还可能有一批**预览版** —— 它们是从 **`ds_dev` 分支**发的，
+`main` 上还没有。认它们只看 tag 的形状：
+
+| tag | 从哪发 | 算什么 |
+|---|---|---|
+| `snapshot-2026-09-15` | `main` | **正式版** |
+| `ds_dev-2026-10-07` | `ds_dev` | **预览版**（`ds_dev-<打包当天日期>`），临时版本 |
+
+预览版**用起来和正式版一模一样** —— 包的结构、`dist.json` 的规矩、三条命令全一样：
+
+```bash
+wtool download-release <项目>   # 读项目里提交的 scripts/release.json → 下到 <项目>/__release/
+wtool unpack-release   <项目>   # 校验 + 拼分卷 + 解到 __output/
+wtool install          <项目>   # 装到本机（登记、软链、shell 集成）
+```
+
+> **预览版是"先让这台机器跑起来"用的临时版本，不是发布。** 等 `ds_dev` 合进 `main`、
+> 从 `main` 发出 `snapshot-*` 那一版，**那才是正式版**；到时候敲同样这三条命令就换成正式版了
+> （`download-release` 读的是项目里**提交在仓库里**的 `release.json`，合并之后它自然指向新 tag）。
+
+**这一轮（2026-10-07 深夜）发了这 10 个** —— 每个都是 `ds_dev-2026-10-07`：
+
+| 项目 | 发布页（点进去就是这一版） |
+|---|---|
+| `bootstrap` | <https://github.com/allinkernel/wtool-bootstrap/releases/tag/ds_dev-2026-10-07> |
+| `os/ubuntu` | <https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/ds_dev-2026-10-07> |
+| `shell/zsh` | <https://github.com/allinkernel/wtool-zsh/releases/tag/ds_dev-2026-10-07> |
+| `shell/oh-my-zsh` | <https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/ds_dev-2026-10-07> |
+| `tools/git-repo-sh-tools` | <https://github.com/allinkernel/wtool-repo/releases/tag/ds_dev-2026-10-07> |
+| `tools/android_repack` | <https://github.com/allinkernel/wtool-android_repack/releases/tag/ds_dev-2026-10-07> |
+| `tools/gerrit-gate` | <https://github.com/allinkernel/wtool-gerrit-gate/releases/tag/ds_dev-2026-10-07> |
+| `tools/dsh-remote` | <https://github.com/allinkernel/wtool-dsh-remote/releases/tag/ds_dev-2026-10-07> |
+| `terminal/tmux` | <https://github.com/allinkernel/wtool-tmux-config/releases/tag/ds_dev-2026-10-07> |
+| `terminal/fzf` | <https://github.com/allinkernel/wtool-fzf-binary/releases/tag/ds_dev-2026-10-07> |
+
+> 预览版**不会**出现在 ② 那张表里：`wtool docs refresh` 查的是每个项目声明的 tag 模板
+> （`snapshot-%Y-%m-%d`），预览版的 tag 不是那个形状 —— 这是有意的（那张表只列正式版）。
+
+> ⚠️ **源码包在线上叫 `source.zip`，不叫 `源码.zip`。** GitHub **不接受非 ASCII 的资产名**：
+> 引擎打的 `源码.zip` / `源码-hash.txt` 一传上去就被它改写成了 `source.zip` / `source-hash.txt`
+> （**内容一个字节没变**，sha256 与 `dist.json` 里记的一致）。所以：
+>
+> - `wtool download-release <项目>` 会报两条「这个文件没下来」（`源码.zip` / `源码-hash.txt`
+>   这两个名字在线上不存在）—— **不影响安装**，`install` 只消费 `release.zip`；
+> - 想要**源码包**：在发布页下 `source.zip`，放进该项目的 `__release/` 并**改名回 `源码.zip`**，
+>   再 `wtool unpack-release <项目>`，它就会连源码包一起校验。
+>
+> 根治办法是让引擎改用 ASCII 资产名，记在 `harness/BACKLOG.md`。
+
+> 手上还没有工作区：先按 §0.2 用 `repo` 拿一套；只有浏览器就下 `bootstrap` 的 `source.zip`
+> 解开当工作区（§0.1 ③ 的路线 A）。
+
 ### 0.2 用 git 拿全套（推荐）
 
 **先装 `wtool` 自己，再让它去装项目。** 一共五步：
