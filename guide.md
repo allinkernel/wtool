@@ -557,6 +557,11 @@ wtool pack-release editor/astronvim_v5
 各配一个校验文件；大项目的产物包会切成若干分卷，外加一份 `dist.json` 说明每一卷。
 同时写一份给人看的下载页 `docs/download.md`。
 
+> **不需要编译的项目只发源码包**（比如 `terminal/tmux`、`bootstrap` 这种 —— 它们没有
+> `scripts/build.sh`，也就没有"产物"可言）：那种情况下产物包里只剩几个声明文件，
+> 而源码包本来就有，所以引擎只打一个源码包。下载方照旧三条命令，
+> `wtool unpack-release` 会把源码铺回项目目录 —— **源码就是产物**。
+
 **上传**：
 
 ```bash
