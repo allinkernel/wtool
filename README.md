@@ -59,7 +59,8 @@ git clone https://github.com/allinkernel/wtool-bootstrap.git ~/self/wtool/bootst
 §0.2 的 git 那条路。
 
 > **下载这条路拿到的是"上一次发布那一刻"的工作区，不一定是最新源码**（现在线上这批包是
-> 2026-09-15 发的）。要最新的源码，走 §0.2 的 git 那条路。
+> 2026-10-09 从 `ds_dev` 发的预览版，tag 是 `ds_dev-2026-10-09`，见 ⑤）。
+> 要最新的源码，走 §0.2 的 git 那条路。
 
 **这张表由 `wtool docs refresh` 重写，不要手改。** 它拿 `gh` 去 GitHub 查每个项目
 **真实存在**的 release，照查到的结果重写整块（`wtool publish-release` 发布成功之后也会自动跑
@@ -74,47 +75,82 @@ git clone https://github.com/allinkernel/wtool-bootstrap.git ~/self/wtool/bootst
 
 | 项目 | 版本 | 包 | 大小 |
 |---|---|---|---|
-| `bootstrap` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-bootstrap/releases/tag/snapshot-2026-09-15) | [bootstrap-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz) | 86.4K |
-| `lightmind` | [snapshot-2026-09-15](https://github.com/allinkernel/typora-LightMindTheme/releases/tag/snapshot-2026-09-15) | [themes-typora-lightmind-2026-09-15.tar.gz](https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz) | 1.2M |
-| `os/ubuntu` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/snapshot-2026-09-15) | [os-ubuntu-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz) | 4.0K |
-| `shell/oh-my-zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/snapshot-2026-09-15) | [shell-oh-my-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz) | 3.0M |
-| `shell/zsh` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-zsh/releases/tag/snapshot-2026-09-15) | [shell-zsh-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz) | 2.2K |
-| `terminal/fzf` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/snapshot-2026-09-15) | [terminal-fzf-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz) | 1.7M |
-| `terminal/tmux` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-tmux-config/releases/tag/snapshot-2026-09-15) | [terminal-tmux-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz) | 4.5K |
-| `tools/git-repo-sh-tools` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool-repo/releases/tag/snapshot-2026-09-15) | [tools-repo-2026-09-15.tar.gz](https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz)（发布时项目还叫 `tools/repo`，所以资产名是 `tools-repo-`） | 5.4K |
-| `wtool-base` | [snapshot-2026-09-15](https://github.com/allinkernel/wtool/releases/tag/snapshot-2026-09-15) | [wtool-base-2026-09-15.tar.gz](https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz) | 23.0K |
+| `bootstrap` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-bootstrap/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/dist.json) | 859B |
+| `bootstrap` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-bootstrap/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `bootstrap` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-bootstrap/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source.zip) | 353.2K |
+| `os/ubuntu` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/dist.json) | 827B |
+| `os/ubuntu` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `os/ubuntu` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-os-ubuntu/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source.zip) | 18.2K |
+| `shell/oh-my-zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/dist.json) | 846B |
+| `shell/oh-my-zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `shell/oh-my-zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source.zip) | 3.3M |
+| `shell/zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-zsh/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/dist.json) | 847B |
+| `shell/zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-zsh/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `shell/zsh` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-zsh/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source.zip) | 118.1K |
+| `terminal/fzf` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/dist.json) | 865B |
+| `terminal/fzf` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `terminal/fzf` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source.zip) | 1.7M |
+| `terminal/tmux` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-tmux-config/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/dist.json) | 866B |
+| `terminal/tmux` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-tmux-config/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `terminal/tmux` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-tmux-config/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source.zip) | 19.6K |
+| `tools/android_repack` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-android_repack/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/dist.json) | 849B |
+| `tools/android_repack` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-android_repack/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `tools/android_repack` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-android_repack/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source.zip) | 180.9K |
+| `tools/dsh-remote` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-dsh-remote/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/dist.json) | 868B |
+| `tools/dsh-remote` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-dsh-remote/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `tools/dsh-remote` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-dsh-remote/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source.zip) | 281.2K |
+| `tools/git-repo-sh-tools` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-repo/releases/tag/ds_dev-2026-10-09) | [dist.json](https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/dist.json) | 862B |
+| `tools/git-repo-sh-tools` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-repo/releases/tag/ds_dev-2026-10-09) | [source-hash.txt](https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source-hash.txt) | 77B |
+| `tools/git-repo-sh-tools` | [ds_dev-2026-10-09](https://github.com/allinkernel/wtool-repo/releases/tag/ds_dev-2026-10-09) | [source.zip](https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source.zip) | 91.4K |
 
 ### bash（Linux / macOS / WSL）
 
 ```bash
 mkdir -p ~/self && cd ~/self
-curl -fL -o bootstrap-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz
-curl -fL -o themes-typora-lightmind-2026-09-15.tar.gz \
-  https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz
-curl -fL -o os-ubuntu-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz
-curl -fL -o shell-oh-my-zsh-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz
-curl -fL -o shell-zsh-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz
-curl -fL -o terminal-fzf-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz
-curl -fL -o terminal-tmux-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz
-curl -fL -o tools-repo-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz
-curl -fL -o wtool-base-2026-09-15.tar.gz \
-  https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz
-tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf themes-typora-lightmind-2026-09-15.tar.gz
-tar -xf os-ubuntu-2026-09-15.tar.gz
-tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
-tar -xf shell-zsh-2026-09-15.tar.gz
-tar -xf terminal-fzf-2026-09-15.tar.gz
-tar -xf terminal-tmux-2026-09-15.tar.gz
-tar -xf tools-repo-2026-09-15.tar.gz
-tar -xf wtool-base-2026-09-15.tar.gz
+curl -fL -o bootstrap-dist.json https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o bootstrap-source-hash.txt https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o bootstrap-source.zip https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o os-ubuntu-dist.json https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o os-ubuntu-source-hash.txt https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o os-ubuntu-source.zip https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o shell-oh-my-zsh-dist.json https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o shell-oh-my-zsh-source-hash.txt https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o shell-oh-my-zsh-source.zip https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o shell-zsh-dist.json https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o shell-zsh-source-hash.txt https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o shell-zsh-source.zip https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o terminal-fzf-dist.json https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o terminal-fzf-source-hash.txt https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o terminal-fzf-source.zip https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o terminal-tmux-dist.json https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o terminal-tmux-source-hash.txt https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o terminal-tmux-source.zip https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o tools-android_repack-dist.json https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o tools-android_repack-source-hash.txt https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o tools-android_repack-source.zip https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o tools-dsh-remote-dist.json https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o tools-dsh-remote-source-hash.txt https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o tools-dsh-remote-source.zip https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source.zip
+curl -fL -o tools-git-repo-sh-tools-dist.json https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/dist.json
+curl -fL -o tools-git-repo-sh-tools-source-hash.txt https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source-hash.txt
+curl -fL -o tools-git-repo-sh-tools-source.zip https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source.zip
+unzip -o bootstrap-source.zip
+
+unzip -o os-ubuntu-source.zip
+
+unzip -o shell-oh-my-zsh-source.zip
+
+unzip -o shell-zsh-source.zip
+
+unzip -o terminal-fzf-source.zip
+
+unzip -o terminal-tmux-source.zip
+
+unzip -o tools-android_repack-source.zip
+
+unzip -o tools-dsh-remote-source.zip
+
+unzip -o tools-git-repo-sh-tools-source.zip
 ```
 
 跑完 `~/self/wtool/` 就是一个完整的工作区。
@@ -125,24 +161,50 @@ tar -xf wtool-base-2026-09-15.tar.gz
 
 ```powershell
 $d = "$HOME\self"; New-Item -ItemType Directory -Force -Path $d | Out-Null; Set-Location $d
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/snapshot-2026-09-15/bootstrap-2026-09-15.tar.gz" -OutFile "bootstrap-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/typora-LightMindTheme/releases/download/snapshot-2026-09-15/themes-typora-lightmind-2026-09-15.tar.gz" -OutFile "themes-typora-lightmind-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/snapshot-2026-09-15/os-ubuntu-2026-09-15.tar.gz" -OutFile "os-ubuntu-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/snapshot-2026-09-15/shell-oh-my-zsh-2026-09-15.tar.gz" -OutFile "shell-oh-my-zsh-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/snapshot-2026-09-15/shell-zsh-2026-09-15.tar.gz" -OutFile "shell-zsh-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/snapshot-2026-09-15/terminal-fzf-2026-09-15.tar.gz" -OutFile "terminal-fzf-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/snapshot-2026-09-15/terminal-tmux-2026-09-15.tar.gz" -OutFile "terminal-tmux-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/snapshot-2026-09-15/tools-repo-2026-09-15.tar.gz" -OutFile "tools-repo-2026-09-15.tar.gz"
-Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool/releases/download/snapshot-2026-09-15/wtool-base-2026-09-15.tar.gz" -OutFile "wtool-base-2026-09-15.tar.gz"
-tar -xf bootstrap-2026-09-15.tar.gz
-tar -xf themes-typora-lightmind-2026-09-15.tar.gz
-tar -xf os-ubuntu-2026-09-15.tar.gz
-tar -xf shell-oh-my-zsh-2026-09-15.tar.gz
-tar -xf shell-zsh-2026-09-15.tar.gz
-tar -xf terminal-fzf-2026-09-15.tar.gz
-tar -xf terminal-tmux-2026-09-15.tar.gz
-tar -xf tools-repo-2026-09-15.tar.gz
-tar -xf wtool-base-2026-09-15.tar.gz
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "bootstrap-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "bootstrap-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-bootstrap/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "bootstrap-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "os-ubuntu-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "os-ubuntu-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-os-ubuntu/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "os-ubuntu-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "shell-oh-my-zsh-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "shell-oh-my-zsh-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "shell-oh-my-zsh-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "shell-zsh-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "shell-zsh-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-zsh/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "shell-zsh-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "terminal-fzf-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "terminal-fzf-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "terminal-fzf-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "terminal-tmux-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "terminal-tmux-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "terminal-tmux-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "tools-android_repack-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "tools-android_repack-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "tools-android_repack-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "tools-dsh-remote-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "tools-dsh-remote-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "tools-dsh-remote-source.zip"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/dist.json" -OutFile "tools-git-repo-sh-tools-dist.json"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source-hash.txt" -OutFile "tools-git-repo-sh-tools-source-hash.txt"
+Invoke-WebRequest -Uri "https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-09/source.zip" -OutFile "tools-git-repo-sh-tools-source.zip"
+Expand-Archive -Force -Path "bootstrap-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "os-ubuntu-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "shell-oh-my-zsh-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "shell-zsh-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "terminal-fzf-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "terminal-tmux-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "tools-android_repack-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "tools-dsh-remote-source.zip" -DestinationPath "."
+
+Expand-Archive -Force -Path "tools-git-repo-sh-tools-source.zip" -DestinationPath "."
 ```
 
 跑完 `$HOME\self\wtool` 就是一个完整的工作区。
@@ -151,6 +213,12 @@ tar -xf wtool-base-2026-09-15.tar.gz
 > 上面这一段（表格 + bash / PowerShell 两版命令）也是**引擎生成的**，文件名和链接以它列出的为准；
 > 里面的安装入口路径按**包里实际有的那个**来（见下面 ④，有两种可能）。另一条提醒：
 > 一个项目的包放进一个目录 —— 别把几个项目的包混在一起（③ 末尾有原因）。
+>
+> 两件容易看岔的事：① 命令里的**文件名带项目前缀**（`bootstrap-source.zip` 这种）——
+> 线上的资产名本身不带项目名（都叫 `source.zip`），几十个文件下到同一个目录里不加前缀
+> 就会互相覆盖；前缀规则是项目路径里的 `/` 换成 `-`。② 表里的
+> `tools/android_repack` 那个仓是**私有的** —— 它的直链只有有权限的账号点得开
+> （没权限会得到 404，但那不是链接写错了）。
 
 #### ③ 下下来之后：两条路，命令写全
 
@@ -242,13 +310,14 @@ wtool bootstrap                    # 用户层：文件、软链、shell 集成�
 
 #### ⑤ 预览发布：从 `ds_dev` 分支发的包（2026-10-07 这一轮）
 
-除了上面那张「正式版」表，线上还可能有一批**预览版** —— 它们是从 **`ds_dev` 分支**发的，
+除了上面 ② 那张**引擎自动刷新的**表，线上还可能有一批**预览版** —— 它们是从 **`ds_dev` 分支**发的，
 `main` 上还没有。认它们只看 tag 的形状：
 
 | tag | 从哪发 | 算什么 |
 |---|---|---|
-| `snapshot-2026-09-15` | `main` | **正式版** |
-| `ds_dev-2026-10-07` | `ds_dev` | **预览版**（`ds_dev-<打包当天日期>`），临时版本 |
+| `snapshot-2026-09-15` | `main` | **正式版**（`snapshot-<打包当天日期>`） |
+| `ds_dev-2026-10-09` | `ds_dev` | **预览版**（`ds_dev-<打包当天日期>`），临时版本；10-09 这轮发了 9 个仓，直链见上面 ② |
+| `ds_dev-2026-10-07` | `ds_dev` | 同一形状的更早一轮预览版；下面那张手写的清单就是它 |
 
 预览版**用起来和正式版一模一样** —— 包的结构、`dist.json` 的规矩、三条命令全一样：
 
@@ -263,6 +332,8 @@ wtool install          <项目>   # 装到本机（登记、软链、shell 集�
 > （`download-release` 读的是项目里**提交在仓库里**的 `release.json`，合并之后它自然指向新 tag）。
 
 **这一轮（2026-10-07 深夜）发了这 10 个** —— 每个都是 `ds_dev-2026-10-07`。
+（**最新一轮是 `ds_dev-2026-10-09`**：那轮的直链在上面 ② 那张引擎生成的表里；
+下面这张是 10-07 那一轮的**手写记录**，链接仍然有效。）
 
 **一站式下载清单。** 下面这张表把 10 个项目的三种资产**直链**都列在一处（仓都在 `allinkernel`
 这个用户名下），链接**一律钉在 tag `ds_dev-2026-10-07` 上**：
@@ -1328,7 +1399,7 @@ wtool version
 - 项目表变了（加了项目、改了 `wtool.xml` 里的发布声明），想让表跟着变；
 - 想确认表里就是 GitHub 上的现状（它每次都现查，不看本地记录）。
 
-跑之前要知道三件事（都是它的实际行为）：
+跑之前要知道四件事（都是它的实际行为）：
 
 1. **它要 `gh`（GitHub CLI）且已登录。** 没有 `gh` 就跳过并警告一句，不会硬失败。
 2. **它改的是文档**（带 `<!-- >>> wtool:downloads >>> -->` 标记的那一块），
@@ -1336,10 +1407,12 @@ wtool version
 3. **它拒绝用空表覆盖已有的表**：如果查到 0 个资产（`gh` 没登录、网络不通、
    release 被删都会这样），而文档里本来有下载表，它会警告并停手 ——
    防止一次网络故障把 30 条链接清空。确认确实要清空才加 `--force`。
-4. **它查的是"今天"那一版**：tag 按每个项目的模板算（默认 `snapshot-%Y-%m-%d`，
-   也就是当天日期）。所以**发布那天刷才刷得到东西** —— 当天没发过版本，就是第 3 条
-   那个「查到 0 个资产」，表原样不动。`publish-release` 发布成功后自动跑的那一遍，
-   正好是"今天发了版本"的情况，所以表总是跟着最新发布走。
+4. **它查的是"这个项目实际发过的那个 tag"**：读项目里**提交在仓库中**的
+   `scripts/release.json`（发布成功时写的），拿它记的 `tag` 去 GitHub 查；
+   从没发布过的项目才退回按模板算（默认 `snapshot-%Y-%m-%d`，也就是当天日期）。
+   所以它跟的是**最后一次发布**，不要求"今天正好发过"——
+   只要发布方把 `scripts/release.json` 提交了，哪一天刷都刷得到。
+   查不到任何资产时就是第 3 条那个「查到 0 个资产」，表原样不动。
 
 `build` / `download-release` / `install` / `uninstall` / `sudo-install` /
 `sudo-uninstall` / `pack-release` / `publish-release` / `unpack-layer` / `push-layer` /
