@@ -197,9 +197,14 @@ wtool install          <项目>   # 装
   那就走路线 A，或者自己编：`wtool build <项目>`（要编译器和网络，几十分钟到几小时）。
 
 > ⚠️ **一个项目的包放进一个目录**（尤其是产物包：**不能改名** —— `dist.json` 是按名字校验
-> 每一卷的）。表里那批包名带项目前缀、不会撞；但引擎**现在**打的包叫 `源码.zip` /
+> 每一卷的）。表里那批包名带项目前缀、不会撞；但引擎**现在**打的包叫 `source.zip` /
 > `release.zip`，**不带项目名** —— 同一版里下好几个项目、又放在一起，就会互相覆盖。
 > 分开存最省事；走路线 B 就完全不用管这件事。
+>
+> **线上名字 = 本地名字**（2026-10-09 起）：源码包在本地也叫 `source.zip`、校验文件叫
+> `source-hash.txt`（以前本地叫 `源码.zip` / `源码-hash.txt`）。改名是因为 GitHub
+> **不接受非 ASCII 资产名**：中文名传上去会被它悄悄改写成 `default.zip`，而本地清单里
+> 记的还是中文名 —— 那条直链就 404（老包遇到这个问题，按下面的说明改名用）。
 
 > **以后打的包可能只有一个**：不需要编译的项目（没有 `scripts/build.sh`、也没有
 > `build/layers.tsv`）**只发源码包**，不再发 `release.zip` —— 那种项目没有"产物"，
@@ -396,23 +401,27 @@ ls -l "$dest"
 2. **公司机器上没有 `wtool`**：照上面的表或脚本把 zip 下全，带回有 `wtool` 的机器再装。
 3. **只想要源码看 / 自己编**：只下 `source.zip` 就够。
 
-> `source.zip` 就是**源码包**（引擎里原来叫 `源码.zip`；GitHub 不接受非 ASCII 资产名，传上去
-> 会被它静默改名 —— 缺陷本身记在 `harness/docs/hazards.md` 的 H27 和 `harness/BACKLOG.md` 的
-> BL-56）。要拿它当源码包喂给 `unpack-release`，得先改名回 `源码.zip`，见下面那条 ⚠️。
+> `source.zip` 就是**源码包**（`source-hash.txt` 是它的校验文件）。**引擎从 2026-10-09 起
+> 本地也叫这个名字** —— 以前本地叫 `源码.zip` / `源码-hash.txt`，而 GitHub **不接受非 ASCII
+> 资产名**：中文名传上去会被它静默改写成 `default.zip`，本地清单里记的还是中文名，那条直链
+> 就 404（缺陷记在 `harness/docs/hazards.md` H27，决策见 ADR-0040）。
+> 所以**新打的包不用改名**，直接连 `dist.json` 一起放进 `<项目>/__release/` 再
+> `wtool unpack-release` 就行。
 
 > 预览版**不会**出现在 ② 那张表里：`wtool docs refresh` 查的是每个项目声明的 tag 模板
 > （`snapshot-%Y-%m-%d`），预览版的 tag 不是那个形状 —— 这是有意的（那张表只列正式版）。
 
-> ⚠️ **源码包在线上叫 `source.zip`，不叫 `源码.zip`。** GitHub **不接受非 ASCII 的资产名**：
-> 引擎打的 `源码.zip` / `源码-hash.txt` 一传上去就被它改写成了 `source.zip` / `source-hash.txt`
-> （**内容一个字节没变**，sha256 与 `dist.json` 里记的一致）。所以：
+> ⚠️ **只有上面那批 2026-10-07 发的老包需要改名**（改名前发的）。那批包的 `dist.json` 和
+> 仓库里提交的 `scripts/release.json` 记的是中文名 `源码.zip` / `源码-hash.txt`，而线上
+> 已经被 GitHub 改成了 `source.zip` / `source-hash.txt`（**内容一个字节没变**，sha256 与
+> `dist.json` 里记的一致）。所以在那批包上：
 >
 > - `wtool download-release <项目>` 会报两条「这个文件没下来」（`源码.zip` / `源码-hash.txt`
 >   这两个名字在线上不存在）—— **不影响安装**，`install` 只消费 `release.zip`；
 > - 想要**源码包**：在发布页下 `source.zip`，放进该项目的 `__release/` 并**改名回 `源码.zip`**，
 >   再 `wtool unpack-release <项目>`，它就会连源码包一起校验。
 >
-> 根治办法是让引擎改用 ASCII 资产名，记在 `harness/BACKLOG.md`。
+> 用新引擎**重发一版**之后这些都不需要了：本地名、清单名、线上名三者一致。
 
 > 手上还没有工作区：先按 §0.2 用 `repo` 拿一套；只有浏览器就下 `bootstrap` 的 `source.zip`
 > 解开当工作区（§0.1 ③ 的路线 A）。
@@ -705,8 +714,8 @@ docker run --rm -it --network=host -v "$PWD":/wtool:ro \
 │       └── lang/        语言增量包，依赖 main
 │           └── cpp/ python/ java/ rust/ go/ lua/
 ├── __release/           ← 包的中转站，不进 Git（文件名就是这个，不带项目名前缀）
-│   ├── 源码.zip         整个项目（不含这三个目录；大项目切成 源码.zip-vol01、-vol02…）
-│   ├── 源码-hash.txt
+│   ├── source.zip       整个项目（不含这三个目录；大项目切成 source.zip-vol01、-vol02…）
+│   ├── source-hash.txt
 │   ├── release.zip      产物包：__output/ 里的东西（同样按 -vol01、-vol02… 切分卷）
 │   ├── release-hash.txt
 │   ├── dist.json        这一份怎么拼：每一卷叫什么、多大、校验值是多少

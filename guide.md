@@ -553,9 +553,14 @@ wtool sudo-bootstrap              # 所有项目的系统层
 wtool pack-release editor/astronvim_v5
 ```
 
-出来的是一对包——**源码包**（整个项目）和**产物包**（`__output/` 里的东西），
-各配一个校验文件；大项目的产物包会切成若干分卷，外加一份 `dist.json` 说明每一卷。
+出来的是一对包——**源码包**（整个项目，`source.zip` + `source-hash.txt`）和**产物包**
+（`__output/` 里的东西，`release.zip` + `release-hash.txt`），各配一个校验文件；
+大项目的产物包会切成若干分卷，外加一份 `dist.json` 说明每一卷。
 同时写一份给人看的下载页 `docs/download.md`。
+
+> **包名一律是 ASCII**（`source.zip` / `release.zip`）：GitHub 不接受非 ASCII 的资产名，
+> 中文名传上去会被它悄悄改写成 `default.zip`，那条下载直链就 404。所以**本地名和线上名
+> 是同一个**，下下来不用改名（2026-10-09 之前本地叫 `源码.zip`；那批老包仍要改名，见 README）。
 
 > **不需要编译的项目只发源码包**（比如 `terminal/tmux`、`bootstrap` 这种 —— 它们没有
 > `scripts/build.sh`，也就没有"产物"可言）：那种情况下产物包里只剩几个声明文件，
