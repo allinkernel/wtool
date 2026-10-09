@@ -333,9 +333,10 @@ wtool install          <项目>   # 装到本机（登记、软链、shell 集�
 
 **这一轮（2026-10-07 深夜）发了这 10 个** —— 每个都是 `ds_dev-2026-10-07`。
 （**最新一轮是 `ds_dev-2026-10-09`**：那轮的直链在上面 ② 那张引擎生成的表里；
-下面这张是 10-07 那一轮的**手写记录**，链接仍然有效。）
+下面这张是 10-07 那一轮的**手写记录**，链接仍然有效。
+那 10 个里的 `tools/gerrit-gate` 后来删掉了、不在项目清单里了，下表只列**现在还在的 9 个**。）
 
-**一站式下载清单。** 下面这张表把 10 个项目的三种资产**直链**都列在一处（仓都在 `allinkernel`
+**一站式下载清单。** 下面这张表把这 9 个项目的三种资产**直链**都列在一处（仓都在 `allinkernel`
 这个用户名下），链接**一律钉在 tag `ds_dev-2026-10-07` 上**：
 
 | 项目（`wtool.xml` 里的路径） | 仓（这一版的 release 页） | `release.zip`（产物包） | `source.zip`（源码包） | `dist.json`（清单） |
@@ -346,16 +347,15 @@ wtool install          <项目>   # 装到本机（登记、软链、shell 集�
 | `shell/oh-my-zsh` | [wtool-ohmyzsh](https://github.com/allinkernel/wtool-ohmyzsh/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-ohmyzsh/releases/download/ds_dev-2026-10-07/dist.json> |
 | `tools/git-repo-sh-tools` | [wtool-repo](https://github.com/allinkernel/wtool-repo/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-repo/releases/download/ds_dev-2026-10-07/dist.json> |
 | `tools/android_repack` | [wtool-android_repack](https://github.com/allinkernel/wtool-android_repack/releases/tag/ds_dev-2026-10-07) **（私有）** | <https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-android_repack/releases/download/ds_dev-2026-10-07/dist.json> |
-| `tools/gerrit-gate` | [wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-gerrit-gate/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-gerrit-gate/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-gerrit-gate/releases/download/ds_dev-2026-10-07/dist.json> |
 | `tools/dsh-remote` | [wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-dsh-remote/releases/download/ds_dev-2026-10-07/dist.json> |
 | `terminal/tmux` | [wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-tmux-config/releases/download/ds_dev-2026-10-07/dist.json> |
 | `terminal/fzf` | [wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary/releases/tag/ds_dev-2026-10-07) | <https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-07/release.zip> | <https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-07/source.zip> | <https://github.com/allinkernel/wtool-fzf-binary/releases/download/ds_dev-2026-10-07/dist.json> |
 
 > 直链的形状是 `https://github.com/allinkernel/<仓>/releases/download/ds_dev-2026-10-07/<资产名>`。
 > **钉的是 tag**，所以从 `ds_dev` 看、从 `main` 看都一样有效，以后合到 `main` 也不用改这张表；
-> **换新版时只把 tag 那一段换掉**（表里是 30 条直链，下面两段脚本里 tag 只是一个变量，改一处）。
+> **换新版时只把 tag 那一段换掉**（表里是 27 条直链，下面两段脚本里 tag 只是一个变量，改一处）。
 
-**PowerShell：整段复制到 PowerShell 里跑**（Windows 10 及以上，一次下全 10 个项目 × 3 个资产；
+**PowerShell：整段复制到 PowerShell 里跑**（Windows 10 及以上，一次下全 9 个项目 × 3 个资产；
 文件名带项目前缀 —— 项目路径里的 `/` 换成 `-`，例如 `bootstrap-release.zip`、`os-ubuntu-release.zip`）
 
 ```powershell
@@ -374,7 +374,6 @@ $projects = @(
   @{ Name = 'shell-oh-my-zsh';         Repo = 'wtool-ohmyzsh';        Private = $false },
   @{ Name = 'tools-git-repo-sh-tools'; Repo = 'wtool-repo';           Private = $false },
   @{ Name = 'tools-android_repack';    Repo = 'wtool-android_repack'; Private = $true  },
-  @{ Name = 'tools-gerrit-gate';       Repo = 'wtool-gerrit-gate';    Private = $false },
   @{ Name = 'tools-dsh-remote';        Repo = 'wtool-dsh-remote';     Private = $false },
   @{ Name = 'terminal-tmux';           Repo = 'wtool-tmux-config';    Private = $false },
   @{ Name = 'terminal-fzf';            Repo = 'wtool-fzf-binary';     Private = $false }
@@ -455,7 +454,6 @@ shell/zsh|wtool-zsh
 shell/oh-my-zsh|wtool-ohmyzsh
 tools/git-repo-sh-tools|wtool-repo
 tools/android_repack|wtool-android_repack
-tools/gerrit-gate|wtool-gerrit-gate
 tools/dsh-remote|wtool-dsh-remote
 terminal/tmux|wtool-tmux-config
 terminal/fzf|wtool-fzf-binary
@@ -1149,7 +1147,6 @@ wtool status editor/astronvim_v5
 | `shell/zsh` | [wtool-zsh](https://github.com/allinkernel/wtool-zsh) | zsh 自身的配置和补全别名 |
 | `tools/git-repo-sh-tools` | [wtool-repo](https://github.com/allinkernel/wtool-repo) | `repo` 工具（管理多仓库的那个）和它的快捷命令（2026-10-04 由 `tools/repo` 改名） |
 | `tools/android_repack` | [wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像"解包 → 改 → 重新打包"的流水线 |
-| `tools/gerrit-gate` | [wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | 本机的代码检视闸门（Gerrit），改动要过它才进主线 |
 | `tools/dsh-remote` | [wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 不在电脑前时用手机接管会话 |
 | `harness/dsh-conf` | [wtool-dsh-conf](https://github.com/allinkernel/wtool-dsh-conf) | 助手自己的配置：提示词、技能、profile |
 | `terminal/tmux` | [wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置，外加一组显示 CPU/内存/磁盘/网络的小脚本 |
