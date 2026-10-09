@@ -193,7 +193,7 @@ wtool validate ./terminal/ripgrep
 | `wtool check [<项目>]` | 声明 / 日志 / 磁盘三者对比，**只报不改** |
 | `wtool repair [<项目>\|all]` | 修 `check` 报出来的（**只重建、不删除**，也不跑项目脚本） |
 | `wtool kill-self-forever` | 删掉 wtool 的一切痕迹（**含状态记录**），删之前要你逐字确认 |
-| `wtool docs refresh` | 重刷 README §0.1 那张发布包一览表（`wtool docs`、`wtool refresh-downloads` 同义） |
+| `wtool docs refresh` | 重刷 `download.md` 那张发布包一览表（`wtool docs`、`wtool refresh-downloads` 同义） |
 | `wtool validate <项目目录>` | 校验 `wtool.xml` |
 | `wtool version` | 版本 |
 
@@ -560,7 +560,7 @@ wtool pack-release editor/astronvim_v5
 
 > **包名一律是 ASCII**（`source.zip` / `release.zip`）：GitHub 不接受非 ASCII 的资产名，
 > 中文名传上去会被它悄悄改写成 `default.zip`，那条下载直链就 404。所以**本地名和线上名
-> 是同一个**，下下来不用改名（2026-10-09 之前本地叫 `源码.zip`；那批老包仍要改名，见 README）。
+> 是同一个**，下下来不用改名。
 
 > **不需要编译的项目只发源码包**（比如 `terminal/tmux`、`bootstrap` 这种 —— 它们没有
 > `scripts/build.sh`，也就没有"产物"可言）：那种情况下产物包里只剩几个声明文件，
@@ -596,16 +596,16 @@ wtool/terminal/tmux/wtool.xml
 ...
 ```
 
-所以不管你的工作区目录叫什么名字，解压出来的路径结构都是一样的——下载、解开、就得到一个能直接用的工作区。这就是 [README](README.md) §0.1「下载 / 获取」能成立的原因。
+所以不管你的工作区目录叫什么名字，解压出来的路径结构都是一样的——下载、解开、就得到一个能直接用的工作区。这就是 [`download.md`](download.md)「下载 wtool」能成立的原因。
 
 带编译产物的项目（比如 Neovim 那套）先 `wtool build` 把产物编出来、再 `pack-release` ——
 编译逻辑在它自己的 `scripts/build.sh` 里，打包上传是引擎的事。
 
-发布结束后，本文档所在仓库 README 里的下载链接会自动重写成最新的——那一段是脚本生成的，不用手动维护。
+发布结束后，[`download.md`](download.md) 里那张资产表会自动重写成最新的——那一段是脚本生成的，不用手动维护。
 
 ### 刷新下载页：`wtool docs refresh`
 
-README §0.1 那张发布包一览表不是手写的，它由这条命令生成：
+[`download.md`](download.md) 那张发布包一览表不是手写的，它由这条命令生成：
 
 ```bash
 wtool docs refresh      # 完整写法
@@ -625,16 +625,20 @@ wtool refresh-downloads # 还是一个东西（这条不在 --help 清单里）
 - 项目表变了（加了项目、改了 `wtool.xml` 里的发布声明），想让表跟着变；
 - 想确认表里就是 GitHub 上的现状 —— 它每次都是**现查**的，不看本地记录。
 
-**跑之前要知道的四件事**：
+**跑之前要知道的五件事**：
 
 1. **要 `gh`（GitHub CLI）并且已登录。** 没有 `gh` 就跳过、只警告一句，不算失败。
-2. **它改的是文档**：带 `<!-- >>> wtool:downloads >>> -->` 标记的那一块。
+2. **它改的是文档**：带 `<!-- >>> wtool:downloads >>> -->` 标记的那一块，宿主是
+   `wtool-base/download.md`（README 里只有一行指向它的链接，不再带标记）。
    改完就是普通的工作区改动 —— `git diff` 能看、`git checkout` 能退，
    提交不提交由你决定。
-3. **它拒绝用空表覆盖已有的表。** 如果这次查到 0 个资产（`gh` 没登录、网络不通、
+3. **下载页只能有一个。** 工作区里带那个标记的文档**多于一个**时，它**拒绝刷新**
+   并把候选逐个列出来 —— 不然会出现"两份下载页、只更新了一份"，另一份永远停在旧版本。
+   看到那条错误就去把多余的标记块删掉，再来一次。
+4. **它拒绝用空表覆盖已有的表。** 如果这次查到 0 个资产（`gh` 没登录、网络不通、
    release 被删，都会这样），而文档里本来有表，它会停手并告诉你可能的原因 ——
    免得一次网络故障把几十条链接清空。确认确实要清空，才加 `--force`。
-4. **它查的是"这个项目实际发过的那个 tag"** —— 读项目里**提交在仓库中**的
+5. **它查的是"这个项目实际发过的那个 tag"** —— 读项目里**提交在仓库中**的
    `scripts/release.json`（发布成功时写的）记的那个 `tag`；从没发布过的项目才退回
    按模板算（默认 `snapshot-%Y-%m-%d`）。所以不要求"今天正好发过"。
 
@@ -671,7 +675,7 @@ wtool status               # 登记表 + 软链检查（不带项目）
 wtool status <项目>         # 逐列说明某一格的状态、对应命令和依据（只看不动）
 wtool validate ./terminal/tmux
 wtool doctor --quiet       # 只输出环境变量；eval "$(wtool doctor --quiet)" 立刻在当前 shell 生效
-wtool docs refresh         # 重刷 README §0.1 的发布包一览表
+wtool docs refresh         # 重刷 download.md 那张发布包一览表
 ```
 
 **`wtool repair [<项目>|all]` —— 坏了自己修回来**（`check` 报什么修什么）：
@@ -725,13 +729,14 @@ wtool kill-self-forever             # 要逐字输入 KILL-SELF-FOREVER 才动�
 | `terminal/tmux` | [allinkernel/wtool-tmux-config](https://github.com/allinkernel/wtool-tmux-config) | tmux 配置与状态脚本 |
 | `terminal/fzf` | [allinkernel/wtool-fzf-binary](https://github.com/allinkernel/wtool-fzf-binary) | fzf 预编译二进制 |
 | `tools/git-repo-sh-tools` | [allinkernel/wtool-repo](https://github.com/allinkernel/wtool-repo) | repo 工具（2026-10-04 由 `tools/repo` 改名；GitHub 仓库名没变） |
-| `tools/android_repack` | [allinkernel/wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像解包 / 改包 / 重签 |
-| `tools/gerrit-gate` | [allinkernel/wtool-gerrit-gate](https://github.com/allinkernel/wtool-gerrit-gate) | docker 里跑一台 Gerrit 的检视闸门。**已废弃**（改成"改动只提交到 `ds_dev`、人来合"，见工作区 `harness/docs/adr/0019`），实物留着可恢复 |
+| `tools/wsw-repo-fork` | [allinkernel/wtool-git-repo](https://github.com/allinkernel/wtool-git-repo) | `repo` 启动器自己那份检出（就是我们用的那个 `repo` 脚本，单独存一份好改） |
+| `tools/android_repack` | [allinkernel/wtool-android_repack](https://github.com/allinkernel/wtool-android_repack) | Android 镜像解包 / 改包 / 重签（**私有仓**） |
 | `tools/dsh-remote` | [allinkernel/wtool-dsh-remote](https://github.com/allinkernel/wtool-dsh-remote) | 手机远程接管家里的会话（阿里云 Caddy + SSH 反向隧道 + 通知） |
 | `themes/typora/lightmind` | [allinkernel/typora-LightMindTheme](https://github.com/allinkernel/typora-LightMindTheme) | Typora 主题 |
 
-> 清单里还有个 `groups="..."` 的字段（`base` / `zsh` / `vim` / `android` / `gerrit` /
-> `remote` / `themes`），可以只同步你要的那几组：`repo init -g all,-gerrit,-remote ...`。
+> 清单里还有个 `groups="..."` 的字段（`base` / `bootstrap` / `ai-agent` / `dsh` /
+> `os` / `vim` / `zsh` / `repo` / `android` / `remote` / `themes`），可以只同步你要的
+> 那几组：`repo init -g all,-remote,-android ...`。
 
 每个项目的详细说明（它装了什么、有哪些脚本、怎么改）由**项目自己**的 README 维护，点仓库名进去看。
 
